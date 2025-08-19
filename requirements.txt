@@ -1,0 +1,26 @@
+# Enterprise SQL AlwaysOn AWS EC2 Scaling Planner
+# Requirements file for Streamlit Cloud deployment
+
+# Core Streamlit framework
+streamlit>=1.28.0,<2.0.0
+
+# Data manipulation and analysis
+pandas>=2.0.0,<3.0.0
+numpy>=1.24.0,<2.0.0
+
+# Interactive visualizations and charts
+plotly>=5.15.0,<6.0.0
+
+# Optional: Enhanced data processing (if needed for future features)
+# scipy>=1.10.0,<2.0.0
+
+# Optional: Additional chart types (uncomment if needed)
+# matplotlib>=3.7.0,<4.0.0
+# seaborn>=0.12.0,<1.0.0
+
+# Optional: Export capabilities (uncomment if needed)
+# openpyxl>=3.1.0,<4.0.0
+# xlsxwriter>=3.1.0,<4.0.0
+
+# Optional: Advanced data validation (uncomment if needed)
+# pydantic>=2.0.0,<3.0.0
