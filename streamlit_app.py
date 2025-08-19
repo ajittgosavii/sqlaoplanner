@@ -151,12 +151,12 @@ def initialize_enterprise_state():
         }
     
     # Skills matrix - current staffing (user configurable) - operations focused
-    if 'current_skills' not in st.session_state:
-        st.session_state.current_skills = {
-            'SQL Server DBA Expert': 3, 
-            'Infrastructure Automation': 1,
-            'ITIL Service Manager': 2
-        }
+    # Always reset to ensure consistency with operations focus
+    st.session_state.current_skills = {
+        'SQL Server DBA Expert': st.session_state.get('current_skills', {}).get('SQL Server DBA Expert', 3), 
+        'Infrastructure Automation': st.session_state.get('current_skills', {}).get('Infrastructure Automation', 1),
+        'ITIL Service Manager': st.session_state.get('current_skills', {}).get('ITIL Service Manager', 2)
+    }
     
     # ITIL 4 service management practices
     if 'itil_practices' not in st.session_state:
@@ -378,7 +378,7 @@ def calculate_enterprise_metrics():
     )
     
     total_skill_gap = sum(
-        max(0, required_skills[role] - st.session_state.current_skills[role])
+        max(0, required_skills[role] - st.session_state.current_skills.get(role, 0))
         for role in required_skills.keys()
     )
     
@@ -558,14 +558,16 @@ st.markdown("### 📝 Current Operations Team Composition")
 st.write("Enter your current staffing levels for each operations role:")
 
 skills_input_cols = st.columns(3)
-for i, role in enumerate(st.session_state.current_skills.keys()):
+# Only show input fields for operations roles
+operations_roles = ['SQL Server DBA Expert', 'Infrastructure Automation', 'ITIL Service Manager']
+for i, role in enumerate(operations_roles):
     col_idx = i % 3
     with skills_input_cols[col_idx]:
         current_count = st.number_input(
             f"**{role}**",
             min_value=0,
             max_value=20,
-            value=st.session_state.current_skills[role],
+            value=st.session_state.current_skills.get(role, 0),
             key=f"current_{role}"
         )
         st.session_state.current_skills[role] = current_count
@@ -581,8 +583,9 @@ required_skills = calculate_skills_requirements(
 )
 
 skills_data = []
-for role in st.session_state.current_skills.keys():
-    current = st.session_state.current_skills[role]
+# Only iterate through roles that exist in both current_skills and required_skills
+for role in required_skills.keys():
+    current = st.session_state.current_skills.get(role, 0)  # Use .get() with default 0
     required = required_skills[role]
     gap = max(0, required - current)
     
@@ -624,10 +627,10 @@ with col1:
         """)
 
 with col2:
-    # Summary metrics
-    total_current = sum(st.session_state.current_skills.values())
+    # Summary metrics - safe calculation
+    total_current = sum(st.session_state.current_skills.get(role, 0) for role in required_skills.keys())
     total_required = sum(required_skills.values())
-    total_gap = sum(max(0, required_skills[role] - st.session_state.current_skills[role]) for role in required_skills.keys())
+    total_gap = sum(max(0, required_skills[role] - st.session_state.current_skills.get(role, 0)) for role in required_skills.keys())
     
     st.metric("👥 Current Team Size", f"{total_current}")
     st.metric("🎯 Required Team Size", f"{total_required}")
