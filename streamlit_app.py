@@ -112,18 +112,66 @@ def initialize_enterprise_state():
             'cobit_5': False
         }
     
-    # Skills matrix with enterprise roles
-    if 'skills_matrix' not in st.session_state:
-        st.session_state.skills_matrix = {
-            'AWS Solutions Architect': {'current': 2, 'required': 4, 'certification': 'AWS Certified Solutions Architect'},
-            'SQL Server DBA Expert': {'current': 3, 'required': 6, 'certification': 'Microsoft Certified: Azure Database Administrator'},
-            'Infrastructure Automation': {'current': 1, 'required': 3, 'certification': 'Terraform Associate'},
-            'Container Orchestration': {'current': 0, 'required': 2, 'certification': 'Kubernetes Administrator'},
-            'Security Specialist': {'current': 1, 'required': 2, 'certification': 'CISSP or AWS Security Specialty'},
-            'ITIL Service Manager': {'current': 2, 'required': 4, 'certification': 'ITIL 4 Managing Professional'},
-            'Enterprise Architect': {'current': 1, 'required': 2, 'certification': 'TOGAF 9 Certified'},
-            'Compliance Officer': {'current': 0, 'required': 1, 'certification': 'Risk Management Professional'}
+    # Skills matrix - current staffing (user configurable)
+    if 'current_skills' not in st.session_state:
+        st.session_state.current_skills = {
+            'AWS Solutions Architect': 2,
+            'SQL Server DBA Expert': 3, 
+            'Infrastructure Automation': 1,
+            'Container Orchestration': 0,
+            'Security Specialist': 1,
+            'ITIL Service Manager': 2,
+            'Enterprise Architect': 1,
+            'Compliance Officer': 0
         }
+    
+    # Skills requirements calculation function
+    def calculate_skills_requirements(clusters, automation_level, support_24x7, compliance_frameworks_count):
+        """Calculate required skills based on scaling parameters"""
+        
+        # Base calculations per cluster ranges
+        base_requirements = {
+            'AWS Solutions Architect': max(1, math.ceil(clusters / 25)),  # 1 per 25 clusters
+            'SQL Server DBA Expert': max(2, math.ceil(clusters / 15)),   # 1 per 15 clusters  
+            'Infrastructure Automation': max(1, math.ceil(clusters / 30)), # 1 per 30 clusters
+            'Container Orchestration': max(0, math.ceil(clusters / 50)) if clusters > 20 else 0,
+            'Security Specialist': max(1, math.ceil(clusters / 40)),      # 1 per 40 clusters
+            'ITIL Service Manager': max(1, math.ceil(clusters / 35)),     # 1 per 35 clusters
+            'Enterprise Architect': max(1, math.ceil(clusters / 60)),     # 1 per 60 clusters
+            'Compliance Officer': max(0, compliance_frameworks_count // 3) # 1 per 3 frameworks
+        }
+        
+        # Adjustments based on automation level
+        automation_multiplier = 1.0 - (automation_level / 100 * 0.3)  # Up to 30% reduction with full automation
+        
+        # 24x7 support multiplier
+        support_multiplier = 1.4 if support_24x7 else 1.0
+        
+        # Apply multipliers
+        adjusted_requirements = {}
+        for role, base_req in base_requirements.items():
+            if role in ['AWS Solutions Architect', 'SQL Server DBA Expert', 'ITIL Service Manager']:
+                # These roles are more affected by 24x7 and less by automation
+                adjusted_req = math.ceil(base_req * support_multiplier * max(0.7, automation_multiplier))
+            else:
+                # Other roles benefit more from automation
+                adjusted_req = math.ceil(base_req * support_multiplier * automation_multiplier)
+            
+            adjusted_requirements[role] = max(1, adjusted_req) if base_req > 0 else 0
+        
+        return adjusted_requirements
+    
+    # Certification mapping
+    skills_certifications = {
+        'AWS Solutions Architect': 'AWS Certified Solutions Architect',
+        'SQL Server DBA Expert': 'Microsoft Certified: Azure Database Administrator', 
+        'Infrastructure Automation': 'Terraform Associate',
+        'Container Orchestration': 'Kubernetes Administrator',
+        'Security Specialist': 'CISSP or AWS Security Specialty',
+        'ITIL Service Manager': 'ITIL 4 Managing Professional',
+        'Enterprise Architect': 'TOGAF 9 Certified',
+        'Compliance Officer': 'Risk Management Professional'
+    }
     
     # ITIL 4 service management practices
     if 'itil_practices' not in st.session_state:
@@ -305,9 +353,81 @@ rto_minutes = st.sidebar.slider("RTO (minutes)", 15, 1440, 240, 15)
 # Support model
 support_24x7 = st.sidebar.checkbox("24x7 Global Support", value=False)
 
+# Skills requirements calculation function  
+def calculate_skills_requirements(clusters, automation_level, support_24x7, compliance_frameworks_count):
+    """Calculate required skills based on scaling parameters"""
+    
+    # Base calculations per cluster ranges
+    base_requirements = {
+        'AWS Solutions Architect': max(1, math.ceil(clusters / 25)),  # 1 per 25 clusters
+        'SQL Server DBA Expert': max(2, math.ceil(clusters / 15)),   # 1 per 15 clusters  
+        'Infrastructure Automation': max(1, math.ceil(clusters / 30)), # 1 per 30 clusters
+        'Container Orchestration': max(0, math.ceil(clusters / 50)) if clusters > 20 else 0,
+        'Security Specialist': max(1, math.ceil(clusters / 40)),      # 1 per 40 clusters
+        'ITIL Service Manager': max(1, math.ceil(clusters / 35)),     # 1 per 35 clusters
+        'Enterprise Architect': max(1, math.ceil(clusters / 60)),     # 1 per 60 clusters
+        'Compliance Officer': max(0, compliance_frameworks_count // 3) # 1 per 3 frameworks
+    }
+    
+    # Adjustments based on automation level
+    automation_multiplier = 1.0 - (automation_level / 100 * 0.3)  # Up to 30% reduction with full automation
+    
+    # 24x7 support multiplier
+    support_multiplier = 1.4 if support_24x7 else 1.0
+    
+    # Apply multipliers
+    adjusted_requirements = {}
+    for role, base_req in base_requirements.items():
+        if role in ['AWS Solutions Architect', 'SQL Server DBA Expert', 'ITIL Service Manager']:
+            # These roles are more affected by 24x7 and less by automation
+            adjusted_req = math.ceil(base_req * support_multiplier * max(0.7, automation_multiplier))
+        else:
+            # Other roles benefit more from automation
+            adjusted_req = math.ceil(base_req * support_multiplier * automation_multiplier)
+        
+        adjusted_requirements[role] = max(1, adjusted_req) if base_req > 0 else 0
+    
+    return adjusted_requirements
+
 # Calculate comprehensive enterprise metrics
 def calculate_enterprise_metrics():
     """Calculate enterprise-grade operational metrics"""
+    
+    # Skills requirements calculation function  
+    def calculate_skills_requirements(clusters, automation_level, support_24x7, compliance_frameworks_count):
+        """Calculate required skills based on scaling parameters"""
+        
+        # Base calculations per cluster ranges
+        base_requirements = {
+            'AWS Solutions Architect': max(1, math.ceil(clusters / 25)),  # 1 per 25 clusters
+            'SQL Server DBA Expert': max(2, math.ceil(clusters / 15)),   # 1 per 15 clusters  
+            'Infrastructure Automation': max(1, math.ceil(clusters / 30)), # 1 per 30 clusters
+            'Container Orchestration': max(0, math.ceil(clusters / 50)) if clusters > 20 else 0,
+            'Security Specialist': max(1, math.ceil(clusters / 40)),      # 1 per 40 clusters
+            'ITIL Service Manager': max(1, math.ceil(clusters / 35)),     # 1 per 35 clusters
+            'Enterprise Architect': max(1, math.ceil(clusters / 60)),     # 1 per 60 clusters
+            'Compliance Officer': max(0, compliance_frameworks_count // 3) # 1 per 3 frameworks
+        }
+        
+        # Adjustments based on automation level
+        automation_multiplier = 1.0 - (automation_level / 100 * 0.3)  # Up to 30% reduction with full automation
+        
+        # 24x7 support multiplier
+        support_multiplier = 1.4 if support_24x7 else 1.0
+        
+        # Apply multipliers
+        adjusted_requirements = {}
+        for role, base_req in base_requirements.items():
+            if role in ['AWS Solutions Architect', 'SQL Server DBA Expert', 'ITIL Service Manager']:
+                # These roles are more affected by 24x7 and less by automation
+                adjusted_req = math.ceil(base_req * support_multiplier * max(0.7, automation_multiplier))
+            else:
+                # Other roles benefit more from automation
+                adjusted_req = math.ceil(base_req * support_multiplier * automation_multiplier)
+            
+            adjusted_requirements[role] = max(1, adjusted_req) if base_req > 0 else 0
+        
+        return adjusted_requirements
     
     # Automation maturity calculation
     total_weight = sum(comp['weight'] for comp in st.session_state.automation_components.values())
@@ -335,10 +455,18 @@ def calculate_enterprise_metrics():
     itil_total = len(st.session_state.itil_practices)
     itil_maturity = (itil_implemented / itil_total * 100) if itil_total > 0 else 0
     
-    # Skills gap analysis
+    # Skills gap analysis with dynamic calculation
+    active_frameworks_count = sum(st.session_state.compliance_requirements.values())
+    required_skills = calculate_skills_requirements(
+        target_clusters, 
+        automation_maturity, 
+        support_24x7, 
+        active_frameworks_count
+    )
+    
     total_skill_gap = sum(
-        max(0, data['required'] - data['current'])
-        for data in st.session_state.skills_matrix.values()
+        max(0, required_skills[role] - st.session_state.current_skills[role])
+        for role in required_skills.keys()
     )
     
     # Business impact assessment
@@ -501,16 +629,63 @@ with col2:
 # Skills & Workforce Planning
 st.subheader("👥 Enterprise Skills & Workforce Planning")
 
+st.markdown("""
+**📊 Skills requirements are dynamically calculated based on your scaling parameters:**
+- **Target Clusters:** {target_clusters} clusters
+- **Automation Level:** {automation_level:.0f}% (reduces staffing needs by up to 30%)
+- **Support Model:** {'24x7 Global' if support_24x7 else 'Business Hours'} (affects staffing requirements)
+- **Compliance Frameworks:** {active_frameworks_count} active frameworks
+""".format(
+    target_clusters=target_clusters,
+    automation_level=metrics['automation_maturity'],
+    support_24x7=support_24x7,
+    active_frameworks_count=sum(st.session_state.compliance_requirements.values())
+))
+
+# Current staffing input section
+st.markdown("### 📝 Current Team Composition")
+st.write("Enter your current staffing levels for each role:")
+
+skills_input_cols = st.columns(4)
+for i, role in enumerate(st.session_state.current_skills.keys()):
+    col_idx = i % 4
+    with skills_input_cols[col_idx]:
+        current_count = st.number_input(
+            f"**{role}**",
+            min_value=0,
+            max_value=20,
+            value=st.session_state.current_skills[role],
+            key=f"current_{role}"
+        )
+        st.session_state.current_skills[role] = current_count
+
+# Calculate requirements and create comparison table
+st.markdown("### 📊 Skills Gap Analysis")
+
+active_frameworks_count = sum(st.session_state.compliance_requirements.values())
+required_skills = calculate_skills_requirements(
+    target_clusters, 
+    metrics['automation_maturity'], 
+    support_24x7, 
+    active_frameworks_count
+)
+
 skills_data = []
-for role, data in st.session_state.skills_matrix.items():
-    gap = max(0, data['required'] - data['current'])
+for role in st.session_state.current_skills.keys():
+    current = st.session_state.current_skills[role]
+    required = required_skills[role]
+    gap = max(0, required - current)
+    
     skills_data.append({
         'Role': role,
-        'Current': data['current'],
-        'Required': data['required'],
-        'Gap': gap,
-        'Certification': data['certification'],
-        'Status': '✅ Adequate' if gap == 0 else f'❌ Gap: {gap}'
+        'Current Staff': current,
+        'Required for Target': required,
+        'Gap': gap if gap > 0 else 0,
+        'Status': '✅ Adequate' if gap == 0 else f'⚠️ Need {gap} more',
+        'Certification Required': skills_certifications[role],
+        'Calculation Logic': f"Based on {target_clusters} clusters" + 
+                           (f" with {metrics['automation_maturity']:.0f}% automation benefit" if metrics['automation_maturity'] > 0 else "") +
+                           (" + 24x7 coverage" if support_24x7 else "")
     })
 
 skills_df = pd.DataFrame(skills_data)
@@ -518,14 +693,56 @@ skills_df = pd.DataFrame(skills_data)
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    st.dataframe(skills_df, use_container_width=True)
+    # Display the skills comparison table
+    st.dataframe(skills_df[['Role', 'Current Staff', 'Required for Target', 'Gap', 'Status', 'Certification Required']], use_container_width=True)
+    
+    # Show calculation methodology
+    with st.expander("📖 How Skills Requirements Are Calculated"):
+        st.markdown("""
+        **Calculation Methodology:**
+        
+        1. **Base Requirements by Role:**
+           - AWS Solutions Architect: 1 per 25 clusters
+           - SQL Server DBA Expert: 1 per 15 clusters  
+           - Infrastructure Automation: 1 per 30 clusters
+           - Container Orchestration: 1 per 50 clusters (if >20 clusters)
+           - Security Specialist: 1 per 40 clusters
+           - ITIL Service Manager: 1 per 35 clusters
+           - Enterprise Architect: 1 per 60 clusters
+           - Compliance Officer: 1 per 3 compliance frameworks
+        
+        2. **Automation Impact:** Up to 30% reduction in requirements with full automation
+        
+        3. **24x7 Support Multiplier:** 40% increase for round-the-clock coverage
+        
+        4. **Role-Specific Adjustments:** Some roles benefit more from automation than others
+        """)
 
 with col2:
-    st.metric("🎯 Total Roles", f"{len(st.session_state.skills_matrix)}")
-    st.metric("⚠️ Skill Gaps", f"{metrics['total_skill_gap']}")
+    # Summary metrics
+    total_current = sum(st.session_state.current_skills.values())
+    total_required = sum(required_skills.values())
+    total_gap = sum(max(0, required_skills[role] - st.session_state.current_skills[role]) for role in required_skills.keys())
     
-    skills_readiness = max(0, 100 - (metrics['total_skill_gap'] / len(st.session_state.skills_matrix) * 100))
-    st.metric("📊 Skills Readiness", f"{skills_readiness:.0f}%")
+    st.metric("👥 Current Team Size", f"{total_current}")
+    st.metric("🎯 Required Team Size", f"{total_required}")
+    st.metric("⚠️ Total Skills Gap", f"{total_gap}")
+    
+    # Skills readiness percentage
+    if total_required > 0:
+        skills_readiness = max(0, 100 - (total_gap / total_required * 100))
+        st.metric("📊 Skills Readiness", f"{skills_readiness:.0f}%")
+        
+        if skills_readiness >= 90:
+            st.success("✅ Team Ready")
+        elif skills_readiness >= 70:
+            st.warning("⚠️ Minor Gaps")
+        else:
+            st.error("❌ Significant Gaps")
+    
+    # Automation benefit explanation
+    if metrics['automation_maturity'] > 30:
+        st.info(f"💡 Automation is reducing your staffing needs by ~{metrics['automation_maturity']/100*30:.0f}%")
 
 # ITIL 4 Service Management Framework
 st.subheader("📚 ITIL 4 Service Management Practices")
