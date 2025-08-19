@@ -793,12 +793,11 @@ with col2:
     total_hires_needed = sum(d['total_new_hires'] for d in forecast_data)
     peak_monthly_hires = max(d['total_new_hires'] for d in forecast_data)
     final_team_size = forecast_data[-1]['total_team_size']
-    final_monthly_cost = forecast_data[-1]['monthly_cost']
     
     st.metric("👥 Total New Hires", f"{total_hires_needed}")
     st.metric("📊 Peak Monthly Hiring", f"{peak_monthly_hires}")
     st.metric("🎯 Final Team Size", f"{final_team_size}")
-    st.metric("💰 Final Monthly Cost", f"${final_monthly_cost:,.0f}")
+    st.metric("⚡ Final Automation Level", f"{forecast_data[-1]['automation_maturity']:.0f}%")
     
     # Hiring timeline alerts
     urgent_months = [d for d in forecast_data if d['total_new_hires'] > 2]
@@ -824,8 +823,7 @@ for data in forecast_data:
             'Clusters': data['clusters'],
             'Team Size': data['total_team_size'],
             'New Hires': data['total_new_hires'],
-            'Automation %': f"{data['automation_maturity']:.0f}%",
-            'Monthly Cost': f"${data['monthly_cost']:,.0f}"
+            'Automation %': f"{data['automation_maturity']:.0f}%"
         }
         
         # Add role-specific hiring details
@@ -931,10 +929,9 @@ if metrics['automation_maturity'] < 50:
 if current_clusters < 20 and target_clusters > 50:
     action_items.append("🏗️ Begin infrastructure automation setup to support scaling")
 
-# Budget planning
-total_cost_increase = forecast_data[-1]['monthly_cost'] - forecast_data[0]['monthly_cost']
-if total_cost_increase > 50000:
-    action_items.append(f"💰 Secure budget approval for ${total_cost_increase:,.0f} monthly cost increase")
+# Team readiness
+if total_hires_needed > 5:
+    action_items.append("👥 Establish structured onboarding and mentorship program")
 
 for i, item in enumerate(action_items, 1):
     st.write(f"{i}. {item}")
