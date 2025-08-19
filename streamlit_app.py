@@ -340,6 +340,7 @@ support_24x7 = st.sidebar.checkbox("24x7 Global Support", value=False)
 
 # Calculate comprehensive enterprise metrics
 # Replace the calculate_enterprise_metrics function with this corrected version:
+# Replace the calculate_enterprise_metrics function with this corrected version:
 
 def calculate_enterprise_metrics():
     """Calculate enterprise-grade operational metrics"""
@@ -363,26 +364,34 @@ def calculate_enterprise_metrics():
         # If no frameworks selected, compliance score is 100%
         compliance_readiness = 100
     else:
-        # Calculate coverage for each active framework
-        framework_coverage = {}
+        # Check if ANY automation components are enabled
+        any_automation_enabled = any(comp['enabled'] for comp in st.session_state.automation_components.values())
         
-        for framework in active_frameworks:
-            # Count components that support this framework and are enabled
-            supporting_components = [
-                comp for comp in st.session_state.automation_components.values()
-                if any(fw.upper() in framework.upper() or framework.upper() in fw.upper() 
-                      for fw in comp['compliance_frameworks'])
-            ]
+        if not any_automation_enabled:
+            # If frameworks are selected but no automation is implemented yet, show 100%
+            # This represents "compliant by default" - no automation gaps exist yet
+            compliance_readiness = 100
+        else:
+            # Calculate coverage for each active framework based on enabled automation
+            framework_coverage = {}
             
-            if supporting_components:
-                enabled_supporting = sum(1 for comp in supporting_components if comp['enabled'])
-                framework_coverage[framework] = (enabled_supporting / len(supporting_components)) * 100
-            else:
-                # If no components support this framework, consider it 100% covered
-                framework_coverage[framework] = 100
-        
-        # Average coverage across all active frameworks
-        compliance_readiness = sum(framework_coverage.values()) / len(framework_coverage) if framework_coverage else 100
+            for framework in active_frameworks:
+                # Count components that support this framework
+                supporting_components = [
+                    comp for comp in st.session_state.automation_components.values()
+                    if any(fw.upper() in framework.upper() or framework.upper() in fw.upper() 
+                          for fw in comp['compliance_frameworks'])
+                ]
+                
+                if supporting_components:
+                    enabled_supporting = sum(1 for comp in supporting_components if comp['enabled'])
+                    framework_coverage[framework] = (enabled_supporting / len(supporting_components)) * 100
+                else:
+                    # If no components support this framework, consider it 100% covered
+                    framework_coverage[framework] = 100
+            
+            # Average coverage across all active frameworks
+            compliance_readiness = sum(framework_coverage.values()) / len(framework_coverage) if framework_coverage else 100
     
     # ITIL maturity calculation
     itil_implemented = sum(1 for practice in st.session_state.itil_practices.values() if practice['implemented'])
