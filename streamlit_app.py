@@ -339,6 +339,8 @@ rto_minutes = st.sidebar.slider("RTO (minutes)", 15, 1440, 240, 15)
 support_24x7 = st.sidebar.checkbox("24x7 Global Support", value=False)
 
 # Calculate comprehensive enterprise metrics
+# Replace the calculate_enterprise_metrics function with this corrected version:
+
 def calculate_enterprise_metrics():
     """Calculate enterprise-grade operational metrics"""
     
@@ -352,16 +354,35 @@ def calculate_enterprise_metrics():
     target_ec2_instances = target_clusters * ec2_per_cluster
     scale_factor = target_clusters / current_clusters
     
-    # Compliance score calculation
-    enabled_compliance_components = sum(
-        1 for comp in st.session_state.automation_components.values() 
-        if comp['enabled'] and comp['compliance_frameworks']
-    )
-    total_compliance_components = sum(
-        1 for comp in st.session_state.automation_components.values() 
-        if comp['compliance_frameworks']
-    )
-    compliance_readiness = (enabled_compliance_components / total_compliance_components * 100) if total_compliance_components > 0 else 0
+    # Fixed Compliance score calculation
+    # Get list of active compliance frameworks
+    active_frameworks = [fw.replace('_compliance', '').replace('_', ' ').upper() 
+                        for fw, enabled in st.session_state.compliance_requirements.items() if enabled]
+    
+    if not active_frameworks:
+        # If no frameworks selected, compliance score is 100%
+        compliance_readiness = 100
+    else:
+        # Calculate coverage for each active framework
+        framework_coverage = {}
+        
+        for framework in active_frameworks:
+            # Count components that support this framework and are enabled
+            supporting_components = [
+                comp for comp in st.session_state.automation_components.values()
+                if any(fw.upper() in framework.upper() or framework.upper() in fw.upper() 
+                      for fw in comp['compliance_frameworks'])
+            ]
+            
+            if supporting_components:
+                enabled_supporting = sum(1 for comp in supporting_components if comp['enabled'])
+                framework_coverage[framework] = (enabled_supporting / len(supporting_components)) * 100
+            else:
+                # If no components support this framework, consider it 100% covered
+                framework_coverage[framework] = 100
+        
+        # Average coverage across all active frameworks
+        compliance_readiness = sum(framework_coverage.values()) / len(framework_coverage) if framework_coverage else 100
     
     # ITIL maturity calculation
     itil_implemented = sum(1 for practice in st.session_state.itil_practices.values() if practice['implemented'])
@@ -397,15 +418,17 @@ def calculate_enterprise_metrics():
     # Risk assessment based on enterprise factors
     risks = []
     
-    # Compliance risks
-    if not any(comp['enabled'] for comp in st.session_state.automation_components.values() 
-               if 'SOX' in comp['compliance_frameworks']):
-        risks.append({
-            'category': 'Compliance',
-            'risk': 'SOX compliance gap in automated controls',
-            'severity': 'Critical',
-            'impact': 'Regulatory violations, audit failures, financial penalties'
-        })
+    # Compliance risks - only if frameworks are selected but not covered
+    if active_frameworks:
+        sox_required = any('SOX' in fw.upper() for fw in active_frameworks)
+        if sox_required and not any(comp['enabled'] for comp in st.session_state.automation_components.values() 
+                   if 'SOX' in comp['compliance_frameworks']):
+            risks.append({
+                'category': 'Compliance',
+                'risk': 'SOX compliance gap in automated controls',
+                'severity': 'Critical',
+                'impact': 'Regulatory violations, audit failures, financial penalties'
+            })
     
     # Security risks
     if not st.session_state.automation_components['Zero-Trust Security Model']['enabled']:
