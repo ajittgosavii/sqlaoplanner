@@ -539,7 +539,7 @@ with col2:
     else:
         st.error("❌ Significant Gaps")
 
-# Skills & Workforce Planning - Operations Focus
+# Skills & Workforce Planning - Operations Focus with Monthly Forecasting
 st.subheader("👥 Operations Team Skills & Workforce Planning")
 
 # Calculate values needed for the markdown string
@@ -651,6 +651,296 @@ with col2:
     # Automation benefit explanation
     if metrics['automation_maturity'] > 30:
         st.info(f"💡 Automation is reducing your staffing needs by ~{metrics['automation_maturity']/100*30:.0f}%")
+
+# Monthly Forecasting System
+st.markdown("---")
+st.markdown("### 📅 Monthly Scaling Forecast & Staffing Roadmap")
+
+def calculate_monthly_forecast():
+    """Calculate month-by-month scaling forecast from current to target clusters"""
+    
+    # Calculate scaling timeline
+    cluster_growth_per_month = (target_clusters - current_clusters) / timeframe
+    
+    # Automation maturity growth (assuming gradual implementation)
+    automation_start = metrics['automation_maturity']
+    automation_target = min(85, automation_start + 40)  # Cap at realistic 85%
+    automation_growth_per_month = (automation_target - automation_start) / timeframe
+    
+    forecast_data = []
+    
+    for month in range(timeframe + 1):
+        month_clusters = current_clusters + (cluster_growth_per_month * month)
+        month_automation = automation_start + (automation_growth_per_month * month)
+        
+        # Calculate staffing requirements for this month
+        month_required_skills = calculate_skills_requirements(
+            int(month_clusters), 
+            month_automation, 
+            support_24x7, 
+            active_frameworks_count
+        )
+        
+        # Calculate hiring needs (assume 2-3 months lead time for hiring/training)
+        hire_lead_time = 3
+        target_month_for_hiring = month + hire_lead_time
+        if target_month_for_hiring <= timeframe:
+            target_clusters_for_hiring = current_clusters + (cluster_growth_per_month * target_month_for_hiring)
+            target_automation_for_hiring = automation_start + (automation_growth_per_month * target_month_for_hiring)
+            target_skills_for_hiring = calculate_skills_requirements(
+                int(target_clusters_for_hiring), 
+                target_automation_for_hiring, 
+                support_24x7, 
+                active_frameworks_count
+            )
+        else:
+            target_skills_for_hiring = month_required_skills
+        
+        # Calculate new hires needed this month
+        current_total = sum(st.session_state.current_skills.get(role, 0) for role in month_required_skills.keys())
+        if month == 0:
+            previous_required = current_total
+        else:
+            previous_required = sum(forecast_data[-1]['required_skills'].values())
+        
+        new_hires_needed = {}
+        total_new_hires = 0
+        
+        for role in month_required_skills.keys():
+            current_role_staff = st.session_state.current_skills.get(role, 0)
+            if month == 0:
+                previous_role_required = current_role_staff
+            else:
+                previous_role_required = forecast_data[-1]['required_skills'].get(role, 0)
+            
+            target_role_required = target_skills_for_hiring.get(role, 0)
+            new_hires_this_role = max(0, target_role_required - previous_role_required)
+            new_hires_needed[role] = new_hires_this_role
+            total_new_hires += new_hires_this_role
+        
+        # Calculate costs (rough estimates)
+        avg_salary_by_role = {
+            'SQL Server DBA Expert': 95000,
+            'Infrastructure Automation': 85000,
+            'ITIL Service Manager': 80000
+        }
+        
+        monthly_cost = sum(
+            month_required_skills.get(role, 0) * avg_salary_by_role[role] / 12
+            for role in avg_salary_by_role.keys()
+        )
+        
+        forecast_data.append({
+            'month': month,
+            'clusters': int(month_clusters),
+            'automation_maturity': month_automation,
+            'required_skills': month_required_skills,
+            'new_hires_needed': new_hires_needed,
+            'total_new_hires': total_new_hires,
+            'monthly_cost': monthly_cost,
+            'total_team_size': sum(month_required_skills.values())
+        })
+    
+    return forecast_data
+
+forecast_data = calculate_monthly_forecast()
+
+# Create forecast visualization
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    # Cluster and team growth chart
+    months = [f"Month {d['month']}" for d in forecast_data]
+    clusters = [d['clusters'] for d in forecast_data]
+    team_sizes = [d['total_team_size'] for d in forecast_data]
+    automation_levels = [d['automation_maturity'] for d in forecast_data]
+    
+    fig = make_subplots(
+        rows=2, cols=1,
+        subplot_titles=('Cluster Growth & Team Size', 'Automation Maturity Growth'),
+        specs=[[{"secondary_y": True}], [{"secondary_y": False}]]
+    )
+    
+    # Cluster and team size
+    fig.add_trace(
+        go.Scatter(x=months, y=clusters, name="Clusters", line=dict(color='blue', width=3)),
+        row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(x=months, y=team_sizes, name="Team Size", line=dict(color='green', width=3)),
+        row=1, col=1, secondary_y=True
+    )
+    
+    # Automation maturity
+    fig.add_trace(
+        go.Scatter(x=months, y=automation_levels, name="Automation %", 
+                  line=dict(color='orange', width=3), fill='tonexty'),
+        row=2, col=1
+    )
+    
+    fig.update_layout(height=500, title_text="📈 Scaling Forecast Overview")
+    fig.update_xaxes(title_text="Timeline", row=2, col=1)
+    fig.update_yaxes(title_text="Clusters", row=1, col=1)
+    fig.update_yaxes(title_text="Team Members", row=1, col=1, secondary_y=True)
+    fig.update_yaxes(title_text="Automation Maturity (%)", row=2, col=1)
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+with col2:
+    st.markdown("### 🎯 Key Forecast Metrics")
+    
+    # Calculate key metrics
+    total_hires_needed = sum(d['total_new_hires'] for d in forecast_data)
+    peak_monthly_hires = max(d['total_new_hires'] for d in forecast_data)
+    final_team_size = forecast_data[-1]['total_team_size']
+    final_monthly_cost = forecast_data[-1]['monthly_cost']
+    
+    st.metric("👥 Total New Hires", f"{total_hires_needed}")
+    st.metric("📊 Peak Monthly Hiring", f"{peak_monthly_hires}")
+    st.metric("🎯 Final Team Size", f"{final_team_size}")
+    st.metric("💰 Final Monthly Cost", f"${final_monthly_cost:,.0f}")
+    
+    # Hiring timeline alerts
+    urgent_months = [d for d in forecast_data if d['total_new_hires'] > 2]
+    if urgent_months:
+        st.warning(f"⚠️ High hiring periods: {len(urgent_months)} months need 3+ hires")
+    
+    if total_hires_needed > 8:
+        st.error("🚨 Consider phased approach - high hiring volume")
+    elif total_hires_needed > 4:
+        st.warning("⚠️ Moderate hiring needs - plan recruitment")
+    else:
+        st.success("✅ Manageable hiring requirements")
+
+# Detailed monthly breakdown
+st.markdown("### 📊 Detailed Monthly Roadmap")
+
+# Create monthly breakdown table
+monthly_breakdown = []
+for data in forecast_data:
+    if data['month'] % 3 == 0 or data['total_new_hires'] > 0:  # Show quarterly + hiring months
+        month_row = {
+            'Month': f"Month {data['month']}",
+            'Clusters': data['clusters'],
+            'Team Size': data['total_team_size'],
+            'New Hires': data['total_new_hires'],
+            'Automation %': f"{data['automation_maturity']:.0f}%",
+            'Monthly Cost': f"${data['monthly_cost']:,.0f}"
+        }
+        
+        # Add role-specific hiring details
+        for role in ['SQL Server DBA Expert', 'Infrastructure Automation', 'ITIL Service Manager']:
+            if data['new_hires_needed'].get(role, 0) > 0:
+                month_row[f'{role} Hires'] = data['new_hires_needed'][role]
+        
+        monthly_breakdown.append(month_row)
+
+breakdown_df = pd.DataFrame(monthly_breakdown)
+st.dataframe(breakdown_df, use_container_width=True)
+
+# Hiring recommendations
+st.markdown("### 🎯 Strategic Hiring Recommendations")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown("#### 🥇 Priority 1: SQL Server DBA")
+    dba_hires = sum(d['new_hires_needed'].get('SQL Server DBA Expert', 0) for d in forecast_data)
+    st.write(f"**Total needed:** {dba_hires}")
+    st.write("**Timeline:** Start immediately")
+    st.write("**Lead time:** 2-3 months")
+    st.write("**Focus:** SQL Server AlwaysOn expertise")
+
+with col2:
+    st.markdown("#### 🥈 Priority 2: Infrastructure Automation")
+    infra_hires = sum(d['new_hires_needed'].get('Infrastructure Automation', 0) for d in forecast_data)
+    st.write(f"**Total needed:** {infra_hires}")
+    st.write("**Timeline:** Month 2-3")
+    st.write("**Lead time:** 1-2 months")
+    st.write("**Focus:** Terraform, AWS automation")
+
+with col3:
+    st.markdown("#### 🥉 Priority 3: ITIL Service Manager")
+    itil_hires = sum(d['new_hires_needed'].get('ITIL Service Manager', 0) for d in forecast_data)
+    st.write(f"**Total needed:** {itil_hires}")
+    st.write("**Timeline:** Month 4-6")
+    st.write("**Lead time:** 1-2 months") 
+    st.write("**Focus:** Service operations, incident mgmt")
+
+# Risk assessment for hiring plan
+st.markdown("---")
+st.markdown("### ⚠️ Hiring Plan Risk Assessment")
+
+hiring_risks = []
+
+if total_hires_needed > 10:
+    hiring_risks.append({
+        'risk': 'High volume hiring may strain recruitment and training capacity',
+        'impact': 'Delayed onboarding, quality issues',
+        'mitigation': 'Consider external recruiters, structured onboarding program'
+    })
+
+if peak_monthly_hires > 3:
+    hiring_risks.append({
+        'risk': 'Peak hiring months may overwhelm team integration',
+        'impact': 'Reduced productivity, cultural integration issues',
+        'mitigation': 'Stagger start dates, assign mentors, extended onboarding'
+    })
+
+skill_gaps = [role for role, gap in {
+    'SQL Server DBA Expert': sum(d['new_hires_needed'].get('SQL Server DBA Expert', 0) for d in forecast_data),
+    'Infrastructure Automation': sum(d['new_hires_needed'].get('Infrastructure Automation', 0) for d in forecast_data),
+    'ITIL Service Manager': sum(d['new_hires_needed'].get('ITIL Service Manager', 0) for d in forecast_data)
+}.items() if gap > 3]
+
+if skill_gaps:
+    hiring_risks.append({
+        'risk': f'High demand for specialized roles: {", ".join(skill_gaps)}',
+        'impact': 'Difficulty finding qualified candidates, salary inflation',
+        'mitigation': 'Early recruitment, internal training programs, contractor bridge'
+    })
+
+if hiring_risks:
+    for risk in hiring_risks:
+        st.markdown(f"""
+        <div class="risk-high">
+            <strong>Risk:</strong> {risk['risk']}<br>
+            <strong>Impact:</strong> {risk['impact']}<br>
+            <strong>Mitigation:</strong> {risk['mitigation']}
+        </div>
+        """, unsafe_allow_html=True)
+else:
+    st.success("🎉 Hiring plan appears manageable with standard recruitment processes!")
+
+# Action items
+st.markdown("---")
+st.markdown("### ✅ Immediate Action Items")
+
+action_items = []
+
+# Immediate hiring needs
+immediate_hires = [d for d in forecast_data[:3] if d['total_new_hires'] > 0]
+if immediate_hires:
+    action_items.append(f"🎯 Start recruitment for {immediate_hires[0]['total_new_hires']} positions in next 3 months")
+
+# Training needs
+if metrics['automation_maturity'] < 50:
+    action_items.append("📚 Develop automation training program for existing team")
+
+# Infrastructure prep
+if current_clusters < 20 and target_clusters > 50:
+    action_items.append("🏗️ Begin infrastructure automation setup to support scaling")
+
+# Budget planning
+total_cost_increase = forecast_data[-1]['monthly_cost'] - forecast_data[0]['monthly_cost']
+if total_cost_increase > 50000:
+    action_items.append(f"💰 Secure budget approval for ${total_cost_increase:,.0f} monthly cost increase")
+
+for i, item in enumerate(action_items, 1):
+    st.write(f"{i}. {item}")
+
+if not action_items:
+    st.info("✅ Current planning appears well-structured. Monitor progress quarterly.")
 
 # ITIL 4 Service Management Framework
 st.subheader("📚 ITIL 4 Service Management Practices")
