@@ -35,12 +35,6 @@ st.markdown("""
         text-align: center;
         margin: 1rem 0;
     }
-    .compliance-section {
-        background-color: #f0f9ff;
-        border-left: 4px solid #0284c7;
-        padding: 1rem;
-        margin: 1rem 0;
-    }
     .governance-section {
         background-color: #fefce8;
         border-left: 4px solid #ca8a04;
@@ -105,7 +99,7 @@ skills_certifications = {
 }
 
 # Global skills requirements calculation function  
-def calculate_skills_requirements(clusters, automation_level, support_24x7, compliance_frameworks_count):
+def calculate_skills_requirements(clusters, automation_level, support_24x7):
     """Calculate required skills based on scaling parameters - focused on operations roles"""
     
     # Base calculations per cluster ranges - operations focused
@@ -137,26 +131,13 @@ def calculate_skills_requirements(clusters, automation_level, support_24x7, comp
 
 # Initialize comprehensive enterprise state
 def initialize_enterprise_state():
-    # Compliance frameworks
-    if 'compliance_requirements' not in st.session_state:
-        st.session_state.compliance_requirements = {
-            'sox_compliance': False,
-            'gdpr_compliance': False,
-            'hipaa_compliance': False,
-            'pci_dss_compliance': False,
-            'iso_27001_compliance': False,
-            'fedramp_compliance': False,
-            'nist_cybersecurity': False,
-            'cobit_5': False
-        }
-    
     # Skills matrix - current staffing (user configurable) - operations focused
-    # Always reset to ensure consistency with operations focus
-    st.session_state.current_skills = {
-        'SQL Server DBA Expert': st.session_state.get('current_skills', {}).get('SQL Server DBA Expert', 3), 
-        'Infrastructure Automation': st.session_state.get('current_skills', {}).get('Infrastructure Automation', 1),
-        'ITIL Service Manager': st.session_state.get('current_skills', {}).get('ITIL Service Manager', 2)
-    }
+    if 'current_skills' not in st.session_state:
+        st.session_state.current_skills = {
+            'SQL Server DBA Expert': 3, 
+            'Infrastructure Automation': 1,
+            'ITIL Service Manager': 2
+        }
     
     # ITIL 4 service management practices
     if 'itil_practices' not in st.session_state:
@@ -182,38 +163,33 @@ def initialize_enterprise_state():
             'architecture_review_board': False,
             'risk_management_committee': False,
             'security_steering_committee': False,
-            'compliance_audit_program': False,
             'business_continuity_plan': False
         }
 
 initialize_enterprise_state()
 
-# Enhanced automation components with compliance mapping
+# Enhanced automation components
 if 'automation_components' not in st.session_state:
     st.session_state.automation_components = {
         # Infrastructure & Cloud (Enhanced)
         'Infrastructure as Code': {
             'enabled': False, 'weight': 8, 'effort': 150, 'category': 'Infrastructure',
             'description': 'Terraform for VPC, subnets, security groups, EC2 instances',
-            'compliance_frameworks': ['SOX', 'ISO 27001', 'COBIT 5'],
             'business_impact': 'High', 'technical_complexity': 'Medium'
         },
         'Multi-AZ High Availability': {
             'enabled': False, 'weight': 9, 'effort': 120, 'category': 'Infrastructure',
             'description': 'Automated failover across availability zones',
-            'compliance_frameworks': ['SOX', 'FedRAMP'],
             'business_impact': 'Critical', 'technical_complexity': 'High'
         },
         'Auto Scaling & Load Balancing': {
             'enabled': False, 'weight': 7, 'effort': 100, 'category': 'Infrastructure',
             'description': 'Dynamic resource scaling based on demand',
-            'compliance_frameworks': [],
             'business_impact': 'High', 'technical_complexity': 'Medium'
         },
         'Network Security Automation': {
             'enabled': False, 'weight': 8, 'effort': 90, 'category': 'Infrastructure',
             'description': 'Automated security group and NACLs management',
-            'compliance_frameworks': ['PCI DSS', 'ISO 27001'],
             'business_impact': 'High', 'technical_complexity': 'Medium'
         },
         
@@ -221,19 +197,16 @@ if 'automation_components' not in st.session_state:
         'SQL AlwaysOn Automation': {
             'enabled': False, 'weight': 10, 'effort': 200, 'category': 'Database',
             'description': 'Automated SQL Server AlwaysOn configuration and management',
-            'compliance_frameworks': ['SOX', 'HIPAA'],
             'business_impact': 'Critical', 'technical_complexity': 'High'
         },
         'Performance Optimization Engine': {
             'enabled': False, 'weight': 6, 'effort': 120, 'category': 'Database',
             'description': 'AI-driven query optimization and index management',
-            'compliance_frameworks': [],
             'business_impact': 'Medium', 'technical_complexity': 'High'
         },
         'Database Lifecycle Management': {
             'enabled': False, 'weight': 7, 'effort': 150, 'category': 'Database',
             'description': 'Automated provisioning, scaling, and decommissioning',
-            'compliance_frameworks': ['SOX'],
             'business_impact': 'High', 'technical_complexity': 'Medium'
         },
         
@@ -241,25 +214,21 @@ if 'automation_components' not in st.session_state:
         'Zero-Trust Security Model': {
             'enabled': False, 'weight': 9, 'effort': 180, 'category': 'Security',
             'description': 'Identity-based access controls with continuous verification',
-            'compliance_frameworks': ['PCI DSS', 'FedRAMP', 'ISO 27001'],
             'business_impact': 'Critical', 'technical_complexity': 'High'
         },
         'Automated Patch Management': {
             'enabled': False, 'weight': 8, 'effort': 140, 'category': 'Security',
             'description': 'Orchestrated patching with rollback capabilities',
-            'compliance_frameworks': ['SOX', 'PCI DSS', 'FedRAMP'],
             'business_impact': 'High', 'technical_complexity': 'Medium'
         },
         'Compliance Monitoring': {
             'enabled': False, 'weight': 7, 'effort': 100, 'category': 'Security',
             'description': 'Continuous compliance validation and reporting',
-            'compliance_frameworks': ['SOX', 'GDPR', 'HIPAA', 'PCI DSS'],
             'business_impact': 'Critical', 'technical_complexity': 'Medium'
         },
         'Data Loss Prevention': {
             'enabled': False, 'weight': 8, 'effort': 120, 'category': 'Security',
             'description': 'Automated data classification and protection',
-            'compliance_frameworks': ['GDPR', 'HIPAA', 'PCI DSS'],
             'business_impact': 'Critical', 'technical_complexity': 'High'
         },
         
@@ -267,19 +236,16 @@ if 'automation_components' not in st.session_state:
         'AI-Powered Monitoring': {
             'enabled': False, 'weight': 8, 'effort': 140, 'category': 'Operations',
             'description': 'Machine learning-based anomaly detection and prediction',
-            'compliance_frameworks': [],
             'business_impact': 'High', 'technical_complexity': 'High'
         },
         'Automated Incident Response': {
             'enabled': False, 'weight': 9, 'effort': 160, 'category': 'Operations',
             'description': 'Self-healing systems with escalation workflows',
-            'compliance_frameworks': ['SOX', 'ISO 27001'],
             'business_impact': 'Critical', 'technical_complexity': 'High'
         },
         'Service Orchestration': {
             'enabled': False, 'weight': 6, 'effort': 100, 'category': 'Operations',
             'description': 'Workflow automation across enterprise systems',
-            'compliance_frameworks': ['COBIT 5'],
             'business_impact': 'Medium', 'technical_complexity': 'Medium'
         },
         
@@ -287,13 +253,11 @@ if 'automation_components' not in st.session_state:
         'Cross-Region DR Automation': {
             'enabled': False, 'weight': 9, 'effort': 200, 'category': 'Backup',
             'description': 'Automated disaster recovery across geographic regions',
-            'compliance_frameworks': ['SOX', 'FedRAMP'],
             'business_impact': 'Critical', 'technical_complexity': 'High'
         },
         'Point-in-Time Recovery': {
             'enabled': False, 'weight': 7, 'effort': 120, 'category': 'Backup',
             'description': 'Granular recovery with minimal data loss',
-            'compliance_frameworks': ['SOX'],
             'business_impact': 'High', 'technical_complexity': 'Medium'
         },
         
@@ -301,13 +265,11 @@ if 'automation_components' not in st.session_state:
         'Enterprise Service Bus': {
             'enabled': False, 'weight': 6, 'effort': 180, 'category': 'Integration',
             'description': 'API gateway and service mesh integration',
-            'compliance_frameworks': ['COBIT 5'],
             'business_impact': 'Medium', 'technical_complexity': 'High'
         },
         'Self-Service Portal': {
             'enabled': False, 'weight': 5, 'effort': 150, 'category': 'Portal',
             'description': 'Enterprise portal with RBAC and workflow approval',
-            'compliance_frameworks': ['SOX'],
             'business_impact': 'Medium', 'technical_complexity': 'Medium'
         }
     }
@@ -339,9 +301,6 @@ rto_minutes = st.sidebar.slider("RTO (minutes)", 15, 1440, 240, 15)
 support_24x7 = st.sidebar.checkbox("24x7 Global Support", value=False)
 
 # Calculate comprehensive enterprise metrics
-# Replace the calculate_enterprise_metrics function with this corrected version:
-# Replace the calculate_enterprise_metrics function with this corrected version:
-
 def calculate_enterprise_metrics():
     """Calculate enterprise-grade operational metrics"""
     
@@ -355,56 +314,16 @@ def calculate_enterprise_metrics():
     target_ec2_instances = target_clusters * ec2_per_cluster
     scale_factor = target_clusters / current_clusters
     
-    # Fixed Compliance score calculation
-    # Get list of active compliance frameworks
-    active_frameworks = [fw.replace('_compliance', '').replace('_', ' ').upper() 
-                        for fw, enabled in st.session_state.compliance_requirements.items() if enabled]
-    
-    if not active_frameworks:
-        # If no frameworks selected, compliance score is 100%
-        compliance_readiness = 100
-    else:
-        # Check if ANY automation components are enabled
-        any_automation_enabled = any(comp['enabled'] for comp in st.session_state.automation_components.values())
-        
-        if not any_automation_enabled:
-            # If frameworks are selected but no automation is implemented yet, show 100%
-            # This represents "compliant by default" - no automation gaps exist yet
-            compliance_readiness = 100
-        else:
-            # Calculate coverage for each active framework based on enabled automation
-            framework_coverage = {}
-            
-            for framework in active_frameworks:
-                # Count components that support this framework
-                supporting_components = [
-                    comp for comp in st.session_state.automation_components.values()
-                    if any(fw.upper() in framework.upper() or framework.upper() in fw.upper() 
-                          for fw in comp['compliance_frameworks'])
-                ]
-                
-                if supporting_components:
-                    enabled_supporting = sum(1 for comp in supporting_components if comp['enabled'])
-                    framework_coverage[framework] = (enabled_supporting / len(supporting_components)) * 100
-                else:
-                    # If no components support this framework, consider it 100% covered
-                    framework_coverage[framework] = 100
-            
-            # Average coverage across all active frameworks
-            compliance_readiness = sum(framework_coverage.values()) / len(framework_coverage) if framework_coverage else 100
-    
     # ITIL maturity calculation
     itil_implemented = sum(1 for practice in st.session_state.itil_practices.values() if practice['implemented'])
     itil_total = len(st.session_state.itil_practices)
     itil_maturity = (itil_implemented / itil_total * 100) if itil_total > 0 else 0
     
     # Skills gap analysis with dynamic calculation
-    active_frameworks_count = sum(st.session_state.compliance_requirements.values())
     required_skills = calculate_skills_requirements(
         target_clusters, 
         automation_maturity, 
-        support_24x7, 
-        active_frameworks_count
+        support_24x7
     )
     
     total_skill_gap = sum(
@@ -426,18 +345,6 @@ def calculate_enterprise_metrics():
     
     # Risk assessment based on enterprise factors
     risks = []
-    
-    # Compliance risks - only if frameworks are selected but not covered
-    if active_frameworks:
-        sox_required = any('SOX' in fw.upper() for fw in active_frameworks)
-        if sox_required and not any(comp['enabled'] for comp in st.session_state.automation_components.values() 
-                   if 'SOX' in comp['compliance_frameworks']):
-            risks.append({
-                'category': 'Compliance',
-                'risk': 'SOX compliance gap in automated controls',
-                'severity': 'Critical',
-                'impact': 'Regulatory violations, audit failures, financial penalties'
-            })
     
     # Security risks
     if not st.session_state.automation_components['Zero-Trust Security Model']['enabled']:
@@ -480,7 +387,6 @@ def calculate_enterprise_metrics():
         'current_ec2_instances': current_ec2_instances,
         'target_ec2_instances': target_ec2_instances,
         'scale_factor': scale_factor,
-        'compliance_readiness': compliance_readiness,
         'itil_maturity': itil_maturity,
         'total_skill_gap': total_skill_gap,
         'critical_components': critical_components,
@@ -507,75 +413,27 @@ with col1:
 with col2:
     st.markdown(f"""
     <div class="operational-metrics">
-        <h4>📋 Compliance</h4>
-        <h3>{metrics['compliance_readiness']:.0f}%</h3>
-        <p>Readiness Score</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col3:
-    st.markdown(f"""
-    <div class="operational-metrics">
         <h4>📚 ITIL</h4>
         <h3>{metrics['itil_maturity']:.0f}%</h3>
         <p>Practice Coverage</p>
     </div>
     """, unsafe_allow_html=True)
 
-with col4:
+with col3:
     availability_color = "🟢" if availability_target >= 99.9 else "🟡" if availability_target >= 99.5 else "🔴"
     st.metric(f"{availability_color} Availability", f"{availability_target}%")
 
-with col5:
+with col4:
     st.metric("📈 Scale Factor", f"{metrics['scale_factor']:.1f}x")
 
-with col6:
+with col5:
     st.metric("👥 Skills Gap", f"{metrics['total_skill_gap']} roles")
 
-# Compliance Dashboard
-st.subheader("📋 Enterprise Compliance & Governance")
-
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    st.markdown("""
-    <div class="compliance-section">
-        <h4>🏛️ Regulatory Compliance Frameworks</h4>
-        <p>Select applicable compliance requirements for your organization:</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Compliance framework selection
-    compliance_cols = st.columns(4)
-    frameworks = list(st.session_state.compliance_requirements.keys())
-    
-    for i, framework in enumerate(frameworks):
-        col_idx = i % 4
-        with compliance_cols[col_idx]:
-            enabled = st.checkbox(
-                framework.replace('_', ' ').upper(),
-                value=st.session_state.compliance_requirements[framework],
-                key=f"compliance_{framework}"
-            )
-            st.session_state.compliance_requirements[framework] = enabled
-
-with col2:
-    active_frameworks = sum(st.session_state.compliance_requirements.values())
-    st.metric("📜 Active Frameworks", f"{active_frameworks}")
-    st.metric("🛡️ Compliance Score", f"{metrics['compliance_readiness']:.0f}%")
-    
-    if metrics['compliance_readiness'] >= 80:
-        st.success("✅ Compliance Ready")
-    elif metrics['compliance_readiness'] >= 60:
-        st.warning("⚠️ Needs Improvement")
-    else:
-        st.error("❌ Significant Gaps")
+with col6:
+    st.metric("💻 EC2 Instances", f"{metrics['target_ec2_instances']}")
 
 # Skills & Workforce Planning - Operations Focus with Monthly Forecasting
 st.subheader("👥 Operations Team Skills & Workforce Planning")
-
-# Calculate values needed for the markdown string
-active_frameworks_count = sum(st.session_state.compliance_requirements.values())
 
 st.markdown(f"""
 **📊 Operations team requirements are dynamically calculated based on your scaling parameters:**
@@ -590,7 +448,6 @@ st.markdown("### 📝 Current Operations Team Composition")
 st.write("Enter your current staffing levels for each operations role:")
 
 skills_input_cols = st.columns(3)
-# Only show input fields for operations roles
 operations_roles = ['SQL Server DBA Expert', 'Infrastructure Automation', 'ITIL Service Manager']
 for i, role in enumerate(operations_roles):
     col_idx = i % 3
@@ -610,14 +467,12 @@ st.markdown("### 📊 Operations Skills Gap Analysis")
 required_skills = calculate_skills_requirements(
     target_clusters, 
     metrics['automation_maturity'], 
-    support_24x7, 
-    active_frameworks_count
+    support_24x7
 )
 
 skills_data = []
-# Only iterate through roles that exist in both current_skills and required_skills
 for role in required_skills.keys():
-    current = st.session_state.current_skills.get(role, 0)  # Use .get() with default 0
+    current = st.session_state.current_skills.get(role, 0)
     required = required_skills[role]
     gap = max(0, required - current)
     
@@ -627,10 +482,7 @@ for role in required_skills.keys():
         'Required for Target': required,
         'Gap': gap if gap > 0 else 0,
         'Status': '✅ Adequate' if gap == 0 else f'⚠️ Need {gap} more',
-        'Certification Required': skills_certifications[role],
-        'Calculation Logic': f"Based on {target_clusters} clusters" + 
-                           (f" with {metrics['automation_maturity']:.0f}% automation benefit" if metrics['automation_maturity'] > 0 else "") +
-                           (" + 24x7 coverage" if support_24x7 else "")
+        'Certification Required': skills_certifications[role]
     })
 
 skills_df = pd.DataFrame(skills_data)
@@ -638,10 +490,8 @@ skills_df = pd.DataFrame(skills_data)
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    # Display the skills comparison table
     st.dataframe(skills_df[['Role', 'Current Staff', 'Required for Target', 'Gap', 'Status', 'Certification Required']], use_container_width=True)
     
-    # Show calculation methodology
     with st.expander("📖 How Skills Requirements Are Calculated"):
         st.markdown("""
         **Calculation Methodology (Operations Focused):**
@@ -659,7 +509,6 @@ with col1:
         """)
 
 with col2:
-    # Summary metrics - safe calculation
     total_current = sum(st.session_state.current_skills.get(role, 0) for role in required_skills.keys())
     total_required = sum(required_skills.values())
     total_gap = sum(max(0, required_skills[role] - st.session_state.current_skills.get(role, 0)) for role in required_skills.keys())
@@ -668,7 +517,6 @@ with col2:
     st.metric("🎯 Required Team Size", f"{total_required}")
     st.metric("⚠️ Total Skills Gap", f"{total_gap}")
     
-    # Skills readiness percentage
     if total_required > 0:
         skills_readiness = max(0, 100 - (total_gap / total_required * 100))
         st.metric("📊 Skills Readiness", f"{skills_readiness:.0f}%")
@@ -680,7 +528,6 @@ with col2:
         else:
             st.error("❌ Significant Gaps")
     
-    # Automation benefit explanation
     if metrics['automation_maturity'] > 30:
         st.info(f"💡 Automation is reducing your staffing needs by ~{metrics['automation_maturity']/100*30:.0f}%")
 
@@ -691,12 +538,9 @@ st.markdown("### 📅 Monthly Scaling Forecast & Staffing Roadmap")
 def calculate_monthly_forecast():
     """Calculate month-by-month scaling forecast from current to target clusters"""
     
-    # Calculate scaling timeline
     cluster_growth_per_month = (target_clusters - current_clusters) / timeframe
-    
-    # Automation maturity growth (assuming gradual implementation)
     automation_start = metrics['automation_maturity']
-    automation_target = min(85, automation_start + 40)  # Cap at realistic 85%
+    automation_target = min(85, automation_start + 40)
     automation_growth_per_month = (automation_target - automation_start) / timeframe
     
     forecast_data = []
@@ -705,15 +549,12 @@ def calculate_monthly_forecast():
         month_clusters = current_clusters + (cluster_growth_per_month * month)
         month_automation = automation_start + (automation_growth_per_month * month)
         
-        # Calculate staffing requirements for this month
         month_required_skills = calculate_skills_requirements(
             int(month_clusters), 
             month_automation, 
-            support_24x7, 
-            active_frameworks_count
+            support_24x7
         )
         
-        # Calculate hiring needs (assume 2-3 months lead time for hiring/training)
         hire_lead_time = 3
         target_month_for_hiring = month + hire_lead_time
         if target_month_for_hiring <= timeframe:
@@ -722,13 +563,11 @@ def calculate_monthly_forecast():
             target_skills_for_hiring = calculate_skills_requirements(
                 int(target_clusters_for_hiring), 
                 target_automation_for_hiring, 
-                support_24x7, 
-                active_frameworks_count
+                support_24x7
             )
         else:
             target_skills_for_hiring = month_required_skills
         
-        # Calculate new hires needed this month
         current_total = sum(st.session_state.current_skills.get(role, 0) for role in month_required_skills.keys())
         if month == 0:
             previous_required = current_total
@@ -750,7 +589,6 @@ def calculate_monthly_forecast():
             new_hires_needed[role] = new_hires_this_role
             total_new_hires += new_hires_this_role
         
-        # Calculate costs (rough estimates)
         avg_salary_by_role = {
             'SQL Server DBA Expert': 95000,
             'Infrastructure Automation': 85000,
@@ -781,7 +619,6 @@ forecast_data = calculate_monthly_forecast()
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    # Cluster and team growth chart
     months = [f"Month {d['month']}" for d in forecast_data]
     clusters = [d['clusters'] for d in forecast_data]
     team_sizes = [d['total_team_size'] for d in forecast_data]
@@ -793,7 +630,6 @@ with col1:
         specs=[[{"secondary_y": True}], [{"secondary_y": False}]]
     )
     
-    # Cluster and team size
     fig.add_trace(
         go.Scatter(x=months, y=clusters, name="Clusters", line=dict(color='blue', width=3)),
         row=1, col=1
@@ -803,7 +639,6 @@ with col1:
         row=1, col=1, secondary_y=True
     )
     
-    # Automation maturity
     fig.add_trace(
         go.Scatter(x=months, y=automation_levels, name="Automation %", 
                   line=dict(color='orange', width=3), fill='tonexty'),
@@ -821,7 +656,6 @@ with col1:
 with col2:
     st.markdown("### 🎯 Key Forecast Metrics")
     
-    # Calculate key metrics
     total_hires_needed = sum(d['total_new_hires'] for d in forecast_data)
     peak_monthly_hires = max(d['total_new_hires'] for d in forecast_data)
     final_team_size = forecast_data[-1]['total_team_size']
@@ -831,7 +665,6 @@ with col2:
     st.metric("🎯 Final Team Size", f"{final_team_size}")
     st.metric("⚡ Final Automation Level", f"{forecast_data[-1]['automation_maturity']:.0f}%")
     
-    # Hiring timeline alerts
     urgent_months = [d for d in forecast_data if d['total_new_hires'] > 2]
     if urgent_months:
         st.warning(f"⚠️ High hiring periods: {len(urgent_months)} months need 3+ hires")
@@ -846,10 +679,9 @@ with col2:
 # Detailed monthly breakdown
 st.markdown("### 📊 Detailed Monthly Roadmap")
 
-# Create monthly breakdown table
 monthly_breakdown = []
 for data in forecast_data:
-    if data['month'] % 3 == 0 or data['total_new_hires'] > 0:  # Show quarterly + hiring months
+    if data['month'] % 3 == 0 or data['total_new_hires'] > 0:
         month_row = {
             'Month': f"Month {data['month']}",
             'Clusters': data['clusters'],
@@ -858,7 +690,6 @@ for data in forecast_data:
             'Automation %': f"{data['automation_maturity']:.0f}%"
         }
         
-        # Add role-specific hiring details
         for role in ['SQL Server DBA Expert', 'Infrastructure Automation', 'ITIL Service Manager']:
             if data['new_hires_needed'].get(role, 0) > 0:
                 month_row[f'{role} Hires'] = data['new_hires_needed'][role]
@@ -948,20 +779,16 @@ st.markdown("### ✅ Immediate Action Items")
 
 action_items = []
 
-# Immediate hiring needs
 immediate_hires = [d for d in forecast_data[:3] if d['total_new_hires'] > 0]
 if immediate_hires:
     action_items.append(f"🎯 Start recruitment for {immediate_hires[0]['total_new_hires']} positions in next 3 months")
 
-# Training needs
 if metrics['automation_maturity'] < 50:
     action_items.append("📚 Develop automation training program for existing team")
 
-# Infrastructure prep
 if current_clusters < 20 and target_clusters > 50:
     action_items.append("🏗️ Begin infrastructure automation setup to support scaling")
 
-# Team readiness
 if total_hires_needed > 5:
     action_items.append("👥 Establish structured onboarding and mentorship program")
 
@@ -993,7 +820,6 @@ for i, (practice, data) in enumerate(st.session_state.itil_practices.items()):
             )
             st.session_state.itil_practices[practice]['maturity'] = maturity
         
-        # Priority indicator
         priority_color = {
             'Critical': '🔴',
             'High': '🟡', 
@@ -1006,11 +832,10 @@ for i, (practice, data) in enumerate(st.session_state.itil_practices.items()):
 # Enhanced Automation Components
 st.subheader("⚡ Enterprise Automation Framework")
 
-# Group by category with enhanced information
 categories = {
-    'Infrastructure': '🗗️',
+    'Infrastructure': '🏗️',
     'Database': '🗄️',
-    'Security': '🔐',
+    'Security': '🔒',
     'Operations': '⚙️',
     'Backup': '💾',
     'Integration': '🔗',
@@ -1038,12 +863,6 @@ for tab, (category, icon) in zip(tabs, categories.items()):
                 
                 st.caption(comp_data['description'])
                 
-                # Compliance frameworks
-                if comp_data['compliance_frameworks']:
-                    frameworks_str = " ".join([f"🏷️{fw}" for fw in comp_data['compliance_frameworks']])
-                    st.caption(f"**Compliance:** {frameworks_str}")
-                
-                # Business impact and complexity
                 impact_color = {'Critical': '🔴', 'High': '🟡', 'Medium': '🟢'}
                 complexity_color = {'High': '🔴', 'Medium': '🟡', 'Low': '🟢'}
                 
@@ -1077,7 +896,6 @@ else:
 # Industry Benchmark Comparison
 st.subheader("📈 Industry Benchmark Assessment")
 
-# Calculate benchmark scores
 benchmark_scores = {
     'Database Availability': {
         'our_score': availability_target,
@@ -1095,12 +913,6 @@ benchmark_scores = {
         'our_score': metrics['itil_maturity'],
         'industry_avg': 60,
         'industry_leader': 90,
-        'unit': '%'
-    },
-    'Compliance Readiness': {
-        'our_score': metrics['compliance_readiness'],
-        'industry_avg': 70,
-        'industry_leader': 95,
         'unit': '%'
     },
     'RTO Performance': {
@@ -1168,7 +980,6 @@ for i, item in enumerate(governance_items):
         )
         st.session_state.governance_framework[item] = enabled
 
-# Governance maturity calculation
 governance_maturity = sum(st.session_state.governance_framework.values()) / len(st.session_state.governance_framework) * 100
 st.metric("🏛️ Governance Maturity", f"{governance_maturity:.0f}%")
 
@@ -1180,7 +991,6 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown("### 🎯 Current Maturity Assessment")
     st.write(f"**Automation Maturity:** {metrics['automation_maturity']:.0f}% ({'Advanced' if metrics['automation_maturity'] >= 70 else 'Developing' if metrics['automation_maturity'] >= 40 else 'Initial'})")
-    st.write(f"**Compliance Readiness:** {metrics['compliance_readiness']:.0f}% ({'Ready' if metrics['compliance_readiness'] >= 80 else 'Needs Work'})")
     st.write(f"**ITIL Practice Coverage:** {metrics['itil_maturity']:.0f}% ({'Mature' if metrics['itil_maturity'] >= 70 else 'Developing'})")
     st.write(f"**Governance Framework:** {governance_maturity:.0f}% ({'Established' if governance_maturity >= 70 else 'Needs Development'})")
 
@@ -1191,9 +1001,6 @@ with col2:
     
     if metrics['automation_maturity'] < 60:
         recommendations.append("🔧 Prioritize automation components with high business impact")
-    
-    if metrics['compliance_readiness'] < 80:
-        recommendations.append("📋 Implement compliance-focused automation components")
     
     if metrics['total_skill_gap'] > 3:
         recommendations.append("👥 Develop comprehensive skills development program")
@@ -1216,12 +1023,10 @@ st.markdown("---")
 st.markdown("### 🏆 Enterprise Certification Status")
 
 if (metrics['automation_maturity'] >= 70 and 
-    metrics['compliance_readiness'] >= 80 and 
     metrics['itil_maturity'] >= 70 and 
     governance_maturity >= 70):
     st.success("🏆 **ENTERPRISE GRADE CERTIFIED** - This solution meets industry benchmark standards for enterprise SQL Server scaling")
-elif (metrics['automation_maturity'] >= 50 and 
-      metrics['compliance_readiness'] >= 60):
+elif (metrics['automation_maturity'] >= 50):
     st.warning("⚠️ **ENTERPRISE READY** - Solution has strong foundation, recommended improvements identified")
 else:
     st.error("❌ **DEVELOPMENT REQUIRED** - Significant gaps exist, not yet enterprise-grade")
