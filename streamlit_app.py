@@ -106,7 +106,7 @@ def calculate_skills_requirements(clusters, automation_level, support_24x7):
     base_requirements = {
         'SQL Server DBA Expert': max(2, math.ceil(clusters / 15)),   # 1 per 15 clusters  
         'Infrastructure Automation': max(1, math.ceil(clusters / 30)), # 1 per 30 clusters
-        'ITIL Service Manager': max(1, math.ceil(clusters / 35)),     # 1 per 35 clusters
+        'ITIL Service Manager': max(1, math.ceil(clusters / 50)),     # 1 per 50 clusters (optimized)
     }
     
     # Adjustments based on automation level
