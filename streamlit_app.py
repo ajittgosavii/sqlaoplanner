@@ -499,7 +499,7 @@ with col1:
         1. **Base Requirements by Role:**
            - SQL Server DBA Expert: 1 per 15 clusters  
            - Infrastructure Automation: 1 per 30 clusters
-           - ITIL Service Manager: 1 per 35 clusters
+           - ITIL Service Manager: 1 per 50 clusters
         
         2. **Automation Impact:** Up to 30% reduction in requirements with full automation
         
