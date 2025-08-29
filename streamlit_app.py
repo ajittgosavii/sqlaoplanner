@@ -136,15 +136,30 @@ if not BOTO3_AVAILABLE:
 # AWS Pricing API Integration
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_aws_pricing():
-    """Fetch real-time AWS pricing using Pricing API or return fallback data"""
+    """Fetch real-time AWS pricing including SQL Server License-Included costs"""
     
     # Return fallback data if boto3 is not available
     if not BOTO3_AVAILABLE:
         return {
-            'ec2': {
+            'ec2_windows': {
+                'm5.xlarge': 0.384, 'm5.2xlarge': 0.768, 'm5.4xlarge': 1.536, 'm5.8xlarge': 3.072,
+                'm5.12xlarge': 4.608, 'm5.16xlarge': 6.144, 'r5.xlarge': 0.504, 'r5.2xlarge': 1.008,
+                'r5.4xlarge': 2.016, 'r5.8xlarge': 4.032, 'r5.12xlarge': 6.048, 'r5.16xlarge': 8.064
+            },
+            'ec2_sql_web': {
+                'm5.xlarge': 0.432, 'm5.2xlarge': 0.864, 'm5.4xlarge': 1.728, 'm5.8xlarge': 3.456,
+                'm5.12xlarge': 5.184, 'm5.16xlarge': 6.912, 'r5.xlarge': 0.552, 'r5.2xlarge': 1.104,
+                'r5.4xlarge': 2.208, 'r5.8xlarge': 4.416, 'r5.12xlarge': 6.624, 'r5.16xlarge': 8.832
+            },
+            'ec2_sql_standard': {
                 'm5.xlarge': 0.768, 'm5.2xlarge': 1.536, 'm5.4xlarge': 3.072, 'm5.8xlarge': 6.144,
                 'm5.12xlarge': 9.216, 'm5.16xlarge': 12.288, 'r5.xlarge': 1.008, 'r5.2xlarge': 2.016,
                 'r5.4xlarge': 4.032, 'r5.8xlarge': 8.064, 'r5.12xlarge': 12.096, 'r5.16xlarge': 16.128
+            },
+            'ec2_sql_enterprise': {
+                'm5.xlarge': 1.344, 'm5.2xlarge': 2.688, 'm5.4xlarge': 5.376, 'm5.8xlarge': 10.752,
+                'm5.12xlarge': 16.128, 'm5.16xlarge': 21.504, 'r5.xlarge': 1.584, 'r5.2xlarge': 3.168,
+                'r5.4xlarge': 6.336, 'r5.8xlarge': 12.672, 'r5.12xlarge': 19.008, 'r5.16xlarge': 25.344
             },
             'ebs': {'gp3': 0.08, 'gp2': 0.10, 'io2': 0.125, 'io1': 0.125},
             'ssm': {'patch_manager': 0.00972},
@@ -154,7 +169,6 @@ def get_aws_pricing():
     try:
         # Check if AWS secrets are available
         if "aws" not in st.secrets:
-            st.info("AWS credentials not configured. Using fallback pricing. Add AWS credentials to secrets.toml for real-time pricing.")
             raise Exception("AWS secrets not configured")
             
         # Initialize AWS client using Streamlit secrets
@@ -166,38 +180,54 @@ def get_aws_pricing():
         
         pricing_client = session.client('pricing', region_name='us-east-1')
         
-        # Get EC2 pricing for SQL Server workloads
-        ec2_response = pricing_client.get_products(
-            ServiceCode='AmazonEC2',
-            Filters=[
+        def get_ec2_pricing(sql_edition=None):
+            """Get EC2 pricing for specific SQL Server edition"""
+            filters = [
                 {'Type': 'TERM_MATCH', 'Field': 'tenancy', 'Value': 'Shared'},
                 {'Type': 'TERM_MATCH', 'Field': 'operatingSystem', 'Value': 'Windows'},
-                {'Type': 'TERM_MATCH', 'Field': 'preInstalledSw', 'Value': 'SQL Server Standard'},
                 {'Type': 'TERM_MATCH', 'Field': 'location', 'Value': 'US East (N. Virginia)'}
-            ],
-            MaxResults=100
-        )
-        
-        # Process EC2 pricing
-        ec2_pricing = {}
-        for product in ec2_response['PriceList']:
-            product_data = json.loads(product, parse_float=Decimal)
-            instance_type = product_data['product']['attributes'].get('instanceType')
-            if instance_type:
-                # Extract on-demand pricing
-                for price_dimension in product_data['terms']['OnDemand'].values():
-                    for price_detail in price_dimension['priceDimensions'].values():
-                        price_per_hour = float(price_detail['pricePerUnit']['USD'])
-                        ec2_pricing[instance_type] = price_per_hour
+            ]
+            
+            if sql_edition:
+                filters.append({'Type': 'TERM_MATCH', 'Field': 'preInstalledSw', 'Value': f'SQL Server {sql_edition}'})
+            else:
+                filters.append({'Type': 'TERM_MATCH', 'Field': 'preInstalledSw', 'Value': 'NA'})
+            
+            response = pricing_client.get_products(
+                ServiceCode='AmazonEC2',
+                Filters=filters,
+                MaxResults=50
+            )
+            
+            pricing = {}
+            for product in response['PriceList']:
+                product_data = json.loads(product, parse_float=Decimal)
+                instance_type = product_data['product']['attributes'].get('instanceType')
+                if instance_type:
+                    # Extract on-demand pricing
+                    for price_dimension in product_data['terms']['OnDemand'].values():
+                        for price_detail in price_dimension['priceDimensions'].values():
+                            price_per_hour = float(price_detail['pricePerUnit']['USD'])
+                            pricing[instance_type] = price_per_hour
+                            break
                         break
-                    break
+            return pricing
         
-        # EBS and SSM pricing
+        # Get pricing for different SQL Server editions
+        ec2_windows = get_ec2_pricing()  # Windows only
+        ec2_sql_web = get_ec2_pricing('Web')
+        ec2_sql_standard = get_ec2_pricing('Standard') 
+        ec2_sql_enterprise = get_ec2_pricing('Enterprise')
+        
+        # EBS and SSM pricing (simplified - can be enhanced with API calls)
         ebs_pricing = {'gp3': 0.08, 'gp2': 0.10, 'io2': 0.125, 'io1': 0.125}
         ssm_pricing = {'patch_manager': 0.00972}
         
         return {
-            'ec2': ec2_pricing,
+            'ec2_windows': ec2_windows,
+            'ec2_sql_web': ec2_sql_web,
+            'ec2_sql_standard': ec2_sql_standard,
+            'ec2_sql_enterprise': ec2_sql_enterprise,
             'ebs': ebs_pricing,
             'ssm': ssm_pricing,
             'last_updated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -206,46 +236,63 @@ def get_aws_pricing():
     except Exception as e:
         # Fallback pricing if API call fails or credentials not available
         return {
-            'ec2': {
+            'ec2_windows': {
+                'm5.xlarge': 0.384, 'm5.2xlarge': 0.768, 'm5.4xlarge': 1.536, 'm5.8xlarge': 3.072,
+                'm5.12xlarge': 4.608, 'm5.16xlarge': 6.144, 'r5.xlarge': 0.504, 'r5.2xlarge': 1.008,
+                'r5.4xlarge': 2.016, 'r5.8xlarge': 4.032, 'r5.12xlarge': 6.048, 'r5.16xlarge': 8.064
+            },
+            'ec2_sql_web': {
+                'm5.xlarge': 0.432, 'm5.2xlarge': 0.864, 'm5.4xlarge': 1.728, 'm5.8xlarge': 3.456,
+                'm5.12xlarge': 5.184, 'm5.16xlarge': 6.912, 'r5.xlarge': 0.552, 'r5.2xlarge': 1.104,
+                'r5.4xlarge': 2.208, 'r5.8xlarge': 4.416, 'r5.12xlarge': 6.624, 'r5.16xlarge': 8.832
+            },
+            'ec2_sql_standard': {
                 'm5.xlarge': 0.768, 'm5.2xlarge': 1.536, 'm5.4xlarge': 3.072, 'm5.8xlarge': 6.144,
                 'm5.12xlarge': 9.216, 'm5.16xlarge': 12.288, 'r5.xlarge': 1.008, 'r5.2xlarge': 2.016,
                 'r5.4xlarge': 4.032, 'r5.8xlarge': 8.064, 'r5.12xlarge': 12.096, 'r5.16xlarge': 16.128
+            },
+            'ec2_sql_enterprise': {
+                'm5.xlarge': 1.344, 'm5.2xlarge': 2.688, 'm5.4xlarge': 5.376, 'm5.8xlarge': 10.752,
+                'm5.12xlarge': 16.128, 'm5.16xlarge': 21.504, 'r5.xlarge': 1.584, 'r5.2xlarge': 3.168,
+                'r5.4xlarge': 6.336, 'r5.8xlarge': 12.672, 'r5.12xlarge': 19.008, 'r5.16xlarge': 25.344
             },
             'ebs': {'gp3': 0.08, 'gp2': 0.10, 'io2': 0.125, 'io1': 0.125},
             'ssm': {'patch_manager': 0.00972},
             'last_updated': 'Fallback Data'
         }
 
-# Microsoft SQL Server Licensing Calculator
-def calculate_sql_server_licensing(deployment_type, instance_type, num_instances, edition="Standard"):
-    """Calculate Microsoft SQL Server licensing costs"""
+# Microsoft SQL Server Licensing Calculator (AWS License-Included Model)
+def calculate_sql_server_licensing_aws(deployment_type, instance_type, num_instances, edition="Standard"):
+    """Calculate SQL Server licensing costs using AWS License-Included pricing"""
     
-    licensing_costs = {
-        "Standard": {"per_core_monthly": 209.00, "min_cores_per_vm": 4},
-        "Enterprise": {"per_core_monthly": 732.00, "min_cores_per_vm": 4},
-        "Web": {"per_core_monthly": 45.00, "min_cores_per_vm": 4}
+    # Get appropriate pricing based on edition
+    edition_key_map = {
+        "Web": "ec2_sql_web",
+        "Standard": "ec2_sql_standard", 
+        "Enterprise": "ec2_sql_enterprise"
     }
     
-    instance_vcpu_map = {
-        'm5.xlarge': 4, 'm5.2xlarge': 8, 'm5.4xlarge': 16, 'm5.8xlarge': 32,
-        'm5.12xlarge': 48, 'm5.16xlarge': 64, 'r5.xlarge': 4, 'r5.2xlarge': 8,
-        'r5.4xlarge': 16, 'r5.8xlarge': 32, 'r5.12xlarge': 48, 'r5.16xlarge': 64
-    }
+    edition_key = edition_key_map.get(edition, "ec2_sql_standard")
+    windows_rate = pricing_data['ec2_windows'].get(instance_type, 0.384)  # Fallback to m5.xlarge Windows rate
+    sql_rate = pricing_data[edition_key].get(instance_type, windows_rate * 2)  # Fallback with 2x multiplier
     
-    vcpus = instance_vcpu_map.get(instance_type, 4)
-    cores_to_license = max(vcpus, licensing_costs[edition]["min_cores_per_vm"])
+    # Calculate the licensing component (SQL Server price - Windows price)
+    licensing_hourly_rate = sql_rate - windows_rate
+    licensing_monthly_cost = licensing_hourly_rate * 24 * 30
     
     if deployment_type == "AlwaysOn Cluster":
-        total_monthly_cost = cores_to_license * licensing_costs[edition]["per_core_monthly"] * 3 * num_instances
+        # AlwaysOn requires licensing all nodes in the cluster (typically 3 nodes)
+        total_monthly_cost = licensing_monthly_cost * 3 * num_instances
     else:
-        total_monthly_cost = cores_to_license * licensing_costs[edition]["per_core_monthly"] * num_instances
+        total_monthly_cost = licensing_monthly_cost * num_instances
     
     return {
         "monthly_cost": total_monthly_cost,
         "annual_cost": total_monthly_cost * 12,
-        "cores_licensed": cores_to_license,
-        "licensing_model": "Core-based",
-        "edition": edition
+        "licensing_model": "AWS License-Included", 
+        "edition": edition,
+        "hourly_rate_per_instance": licensing_hourly_rate,
+        "notes": f"Based on AWS {edition} License-Included pricing vs Windows-only pricing"
     }
 
 # Load AWS pricing
@@ -445,9 +492,15 @@ current_resources = st.sidebar.number_input("Team Size", min_value=1, max_value=
 
 # Instance Configuration
 st.sidebar.subheader("💻 Instance Configuration")
+available_instances = list(set(
+    list(pricing_data['ec2_windows'].keys()) + 
+    list(pricing_data['ec2_sql_standard'].keys())
+))
+available_instances.sort()
+
 instance_type = st.sidebar.selectbox(
     "EC2 Instance Type",
-    list(pricing_data['ec2'].keys()),
+    available_instances,
     help="SQL Server optimized EC2 instance types"
 )
 
@@ -500,26 +553,46 @@ rto_minutes = st.sidebar.slider("RTO (minutes)", 15, 1440, 240, 15)
 support_24x7 = st.sidebar.checkbox("24x7 Global Support", value=False)
 
 # Cost calculation functions
-def calculate_infrastructure_costs(clusters, instance_type, instances_per_cluster, storage_tb, ebs_type, enable_patching):
-    """Calculate comprehensive infrastructure costs"""
+def calculate_infrastructure_costs(clusters, instance_type, instances_per_cluster, storage_tb, ebs_type, enable_patching, sql_edition):
+    """Calculate comprehensive infrastructure costs including SQL Server licensing"""
     
-    ec2_hourly_rate = pricing_data['ec2'].get(instance_type, 1.0)
+    # Get pricing rates
+    windows_rate = pricing_data['ec2_windows'].get(instance_type, 0.384)
+    
+    edition_key_map = {
+        "Web": "ec2_sql_web",
+        "Standard": "ec2_sql_standard", 
+        "Enterprise": "ec2_sql_enterprise"
+    }
+    edition_key = edition_key_map.get(sql_edition, "ec2_sql_standard")
+    sql_windows_rate = pricing_data[edition_key].get(instance_type, windows_rate * 2)
+    
     total_instances = clusters * instances_per_cluster
-    monthly_ec2_cost = ec2_hourly_rate * 24 * 30 * total_instances
     
+    # EC2 costs (using SQL Server License-Included pricing)
+    monthly_ec2_cost = sql_windows_rate * 24 * 30 * total_instances
+    
+    # EBS costs
     ebs_rate_per_gb = pricing_data['ebs'][ebs_type]
     storage_gb = storage_tb * 1024
     monthly_ebs_cost = ebs_rate_per_gb * storage_gb * total_instances
     
+    # SSM Patch Management costs
     monthly_ssm_cost = 0
     if enable_patching:
         ssm_hourly_rate = pricing_data['ssm']['patch_manager']
         monthly_ssm_cost = ssm_hourly_rate * 24 * 30 * total_instances
     
-    monthly_data_transfer = clusters * 50
+    # Data transfer costs (estimate based on cluster communication)
+    monthly_data_transfer = clusters * 25 if deployment_type == "AlwaysOn Cluster" else clusters * 10
+    
+    # Calculate SQL licensing component separately for visibility
+    licensing_hourly_rate = sql_windows_rate - windows_rate
+    monthly_licensing_cost = licensing_hourly_rate * 24 * 30 * total_instances
     
     return {
-        'ec2_monthly': monthly_ec2_cost,
+        'ec2_compute_monthly': (windows_rate * 24 * 30 * total_instances),
+        'sql_licensing_monthly': monthly_licensing_cost,
         'ebs_monthly': monthly_ebs_cost,
         'ssm_monthly': monthly_ssm_cost,
         'data_transfer_monthly': monthly_data_transfer,
@@ -527,53 +600,35 @@ def calculate_infrastructure_costs(clusters, instance_type, instances_per_cluste
         'total_instances': total_instances
     }
 
-def calculate_total_cost_of_ownership(clusters, timeframe_months):
-    """Calculate comprehensive TCO"""
+def calculate_total_cost_of_ownership(clusters, timeframe_months, include_staffing=False, custom_monthly_staffing=0):
+    """Calculate comprehensive TCO with optional staffing costs"""
     
+    # Infrastructure costs (includes SQL licensing via AWS License-Included pricing)
     infra_costs = calculate_infrastructure_costs(
-        clusters, instance_type, ec2_per_cluster, current_storage_tb, ebs_volume_type, enable_ssm_patching
+        clusters, instance_type, ec2_per_cluster, current_storage_tb, ebs_volume_type, enable_ssm_patching, sql_edition
     )
     
-    sql_licensing = calculate_sql_server_licensing(
-        deployment_type, instance_type, clusters, sql_edition
-    )
+    # Staffing costs (only if explicitly requested)
+    monthly_staffing_cost = custom_monthly_staffing if include_staffing else 0
     
-    required_skills = calculate_skills_requirements(clusters, 50, support_24x7)
-    monthly_staffing_cost = sum(
-        required_skills.get(role, 0) * salary / 12
-        for role, salary in {
-            'SQL Server DBA Expert': 110000,
-            'Infrastructure Automation': 95000,
-            'ITIL Service Manager': 85000
-        }.items()
-    )
+    # Calculate monthly total
+    monthly_total = infra_costs['total_monthly'] + monthly_staffing_cost
     
-    training_cost = sum(required_skills.values()) * 5000
-    monthly_support_cost = infra_costs['total_monthly'] * 0.20
-    
-    monthly_total = (
-        infra_costs['total_monthly'] +
-        sql_licensing['monthly_cost'] +
-        monthly_staffing_cost +
-        monthly_support_cost
-    )
-    
-    total_tco = monthly_total * timeframe_months + training_cost
+    # Total TCO over timeframe
+    total_tco = monthly_total * timeframe_months
     
     return {
         'infrastructure': infra_costs,
-        'licensing': sql_licensing,
         'staffing_monthly': monthly_staffing_cost,
-        'support_monthly': monthly_support_cost,
-        'training_total': training_cost,
         'monthly_total': monthly_total,
         'total_tco': total_tco,
         'tco_breakdown': {
-            'Infrastructure': infra_costs['total_monthly'] * timeframe_months,
-            'SQL Licensing': sql_licensing['annual_cost'] * (timeframe_months / 12),
-            'Staffing': monthly_staffing_cost * timeframe_months,
-            'Support': monthly_support_cost * timeframe_months,
-            'Training': training_cost
+            'EC2 Compute': infra_costs['ec2_compute_monthly'] * timeframe_months,
+            'SQL Licensing (AWS)': infra_costs['sql_licensing_monthly'] * timeframe_months,
+            'EBS Storage': infra_costs['ebs_monthly'] * timeframe_months,
+            'SSM Patching': infra_costs['ssm_monthly'] * timeframe_months,
+            'Data Transfer': infra_costs['data_transfer_monthly'] * timeframe_months,
+            'Staffing': monthly_staffing_cost * timeframe_months if include_staffing else 0
         }
     }
 
@@ -1276,64 +1331,121 @@ fig_tco.update_layout(
 
 st.plotly_chart(fig_tco, use_container_width=True)
 
-# Microsoft SQL Server Licensing Analysis
-st.markdown("### 📄 Microsoft SQL Server Licensing Analysis")
+# SQL Server Licensing Analysis (AWS License-Included Model)
+st.markdown("### 📄 AWS SQL Server License-Included Analysis")
 
-licensing_info = target_tco['licensing']
+# Calculate licensing info using AWS model
+aws_licensing_info = calculate_sql_server_licensing_aws(deployment_type, instance_type, target_clusters, sql_edition)
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown(f"""
     <div class="licensing-alert">
-        <h4>📋 Licensing Summary</h4>
-        <p><strong>Edition:</strong> SQL Server {licensing_info['edition']}</p>
-        <p><strong>Model:</strong> {licensing_info['licensing_model']}</p>
-        <p><strong>Cores Licensed:</strong> {licensing_info['cores_licensed']} per instance</p>
+        <h4>📋 AWS Licensing Summary</h4>
+        <p><strong>Edition:</strong> SQL Server {aws_licensing_info['edition']}</p>
+        <p><strong>Model:</strong> {aws_licensing_info['licensing_model']}</p>
+        <p><strong>Hourly Rate:</strong> ${aws_licensing_info['hourly_rate_per_instance']:.3f}/instance</p>
         <p><strong>Deployment:</strong> {deployment_type}</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
-    st.metric("💰 Monthly Licensing", f"${licensing_info['monthly_cost']:,.0f}")
-    st.metric("📅 Annual Licensing", f"${licensing_info['annual_cost']:,.0f}")
+    st.metric("💰 Monthly Licensing", f"${aws_licensing_info['monthly_cost']:,.0f}")
+    st.metric("📅 Annual Licensing", f"${aws_licensing_info['annual_cost']:,.0f}")
 
 with col3:
     if deployment_type == "AlwaysOn Cluster":
-        st.info("💡 AlwaysOn clusters require licensing for all nodes. Secondary replicas with Software Assurance may be licensed at no additional cost for disaster recovery scenarios.")
+        st.info("💡 AWS License-Included pricing automatically covers all nodes in AlwaysOn clusters. No separate licensing calculation needed.")
     else:
-        st.info("💡 Standalone instances require core-based licensing based on the physical cores of the server.")
+        st.info("💡 AWS License-Included pricing simplifies licensing - no core counting or CAL management required.")
+    
+    st.caption(f"**Pricing Model:** {aws_licensing_info['notes']}")
 
-# ROI Analysis
+# AWS Pricing Information
+st.markdown("---")
+st.markdown("### 📊 AWS Pricing Details & Transparency")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("#### 💻 Current AWS Pricing")
+    st.write(f"**Data Source:** {pricing_data['last_updated']}")
+    st.write(f"**Instance Type:** {instance_type}")
+    
+    # Show pricing breakdown
+    windows_rate = pricing_data['ec2_windows'].get(instance_type, 0)
+    edition_key = {"Web": "ec2_sql_web", "Standard": "ec2_sql_standard", "Enterprise": "ec2_sql_enterprise"}[sql_edition]
+    sql_rate = pricing_data[edition_key].get(instance_type, 0)
+    licensing_rate = sql_rate - windows_rate
+    
+    st.write(f"**Windows Only:** ${windows_rate:.3f}/hour")
+    st.write(f"**Windows + SQL {sql_edition}:** ${sql_rate:.3f}/hour")
+    st.write(f"**SQL Licensing Component:** ${licensing_rate:.3f}/hour")
+    
+    st.write(f"**EBS {ebs_volume_type.upper()}:** ${pricing_data['ebs'][ebs_volume_type]:.3f}/GB/month")
+    if enable_ssm_patching:
+        st.write(f"**SSM Patch Mgmt:** ${pricing_data['ssm']['patch_manager']:.5f}/instance/hour")
+
+with col2:
+    st.markdown("#### 🎯 AWS License-Included Benefits")
+    
+    benefits = [
+        "✅ No core counting complexity",
+        "✅ No Client Access License (CAL) management", 
+        "✅ Automatic compliance handling",
+        "✅ Simplified billing and procurement",
+        "✅ AWS enterprise pricing passed through",
+        "✅ Regional pricing optimization",
+        "✅ No license mobility paperwork"
+    ]
+    
+    for benefit in benefits:
+        st.write(benefit)
+    
+    st.markdown("**📈 Pricing Advantages:**")
+    st.write("• Dynamic pricing reflects current AWS rates")
+    st.write("• Volume discounts already applied")
+    st.write("• No licensing true-up audits")
+
+# ROI Analysis (Updated)
 st.markdown("### 📈 Return on Investment Analysis")
 
+# Calculate ROI based on automation benefits (infrastructure focus)
 baseline_manual_cost = target_tco['total_tco']
-optimized_cost = baseline_manual_cost * (1 - metrics['cost_savings_percentage']/100)
-investment_cost = sum(comp['effort'] * 150 for comp in st.session_state.automation_components.values() if comp['enabled'])
+automation_infrastructure_savings = baseline_manual_cost * (metrics['cost_savings_percentage'] / 100)
+optimized_cost = baseline_manual_cost - automation_infrastructure_savings
 
-total_savings = baseline_manual_cost - optimized_cost
-roi_percentage = ((total_savings - investment_cost) / investment_cost * 100) if investment_cost > 0 else 0
-payback_months = (investment_cost / (total_savings / timeframe)) if total_savings > 0 else float('inf')
+# Implementation cost for automation (remove hardcoded hourly rate)
+automation_implementation_hours = sum(comp['effort'] for comp in st.session_state.automation_components.values() if comp['enabled'])
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric("💰 Total Savings", f"${total_savings:,.0f}")
-    st.metric("🏗️ Implementation Cost", f"${investment_cost:,.0f}")
+    st.metric("💰 Infrastructure Savings", f"${automation_infrastructure_savings:,.0f}")
+    st.metric("⚙️ Implementation Hours", f"{automation_implementation_hours:,}")
+    st.caption("Implementation cost depends on your hourly rates")
 
 with col2:
-    st.metric("📊 ROI", f"{roi_percentage:.1f}%")
-    st.metric("⏱️ Payback Period", f"{payback_months:.1f} months" if payback_months != float('inf') else "N/A")
+    if automation_infrastructure_savings > 0:
+        roi_percentage = (automation_infrastructure_savings / baseline_manual_cost * 100)
+        st.metric("📊 Infrastructure ROI", f"{roi_percentage:.1f}%")
+        
+        # Payback in months (assuming savings are monthly)
+        monthly_savings = automation_infrastructure_savings / timeframe
+        st.metric("⏱️ Monthly Savings", f"${monthly_savings:,.0f}")
+    else:
+        st.metric("📊 Infrastructure ROI", "Enable automation components")
 
 with col3:
-    if roi_percentage > 100:
-        st.success("🎉 Excellent ROI - Strong business case")
-    elif roi_percentage > 50:
-        st.info("✅ Good ROI - Recommended investment")
-    elif roi_percentage > 0:
-        st.warning("⚠️ Modest ROI - Consider phased approach")
+    if automation_infrastructure_savings > baseline_manual_cost * 0.15:
+        st.success("🎉 Excellent automation ROI potential")
+    elif automation_infrastructure_savings > baseline_manual_cost * 0.05:
+        st.info("✅ Good automation benefits")
+    elif automation_infrastructure_savings > 0:
+        st.warning("⚠️ Modest automation impact")
     else:
-        st.error("❌ Negative ROI - Review automation strategy")
+        st.error("❌ Enable automation components for ROI analysis")
 
 # Executive Summary & Recommendations (RESTORED)
 st.subheader("📊 Executive Summary & Recommendations")
