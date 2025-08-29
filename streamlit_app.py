@@ -24,114 +24,173 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for enterprise styling (enhanced with cost elements)
+# Page configuration
+st.set_page_config(
+    page_title="Enterprise SQL Server Scaling Platform | Strategic Planning & TCO Analysis",
+    page_icon="🏢",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Corporate CSS styling
 st.markdown("""
 <style>
     .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #1f2937;
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: #1e3a8a;
         text-align: center;
-        margin-bottom: 1rem;
+        margin-bottom: 2rem;
+        font-family: 'Segoe UI', 'Arial', sans-serif;
+        letter-spacing: -0.025em;
     }
     .enterprise-badge {
-        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+        background: linear-gradient(135deg, #1e40af 0%, #3730a3 50%, #1e1b4b 100%);
         color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: bold;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
         text-align: center;
-        margin: 1rem 0;
+        margin: 2rem auto;
+        max-width: 900px;
+        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .executive-summary {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-left: 6px solid #1e40af;
+        padding: 2rem;
+        margin: 2rem 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
     .cost-summary {
-        background: linear-gradient(135deg, #dc2626 0%, #f59e0b 100%);
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
         color: white;
-        padding: 1rem;
-        border-radius: 10px;
+        padding: 2rem;
+        border-radius: 8px;
         text-align: center;
-        margin: 1rem 0;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
     }
     .savings-highlight {
-        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
         color: white;
-        padding: 1rem;
-        border-radius: 10px;
+        padding: 2rem;
+        border-radius: 8px;
         text-align: center;
-        margin: 1rem 0;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
     }
-    .licensing-alert {
-        background-color: #fef3c7;
-        border-left: 4px solid #f59e0b;
-        padding: 1rem;
-        margin: 1rem 0;
-    }
-    .governance-section {
+    .governance-framework {
         background-color: #fefce8;
-        border-left: 4px solid #ca8a04;
-        padding: 1rem;
-        margin: 1rem 0;
+        border-left: 6px solid #ca8a04;
+        padding: 2rem;
+        margin: 2rem 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
     .operational-metrics {
-        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
         color: white;
-        padding: 1rem;
-        border-radius: 10px;
+        padding: 2rem;
+        border-radius: 8px;
         text-align: center;
+        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
     }
     .risk-critical {
-        background-color: #fee2e2;
-        border-left: 4px solid #dc2626;
-        padding: 1rem;
-        margin: 0.5rem 0;
+        background-color: #fef2f2;
+        border-left: 6px solid #dc2626;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-radius: 8px;
     }
     .risk-high {
-        background-color: #fef3c7;
-        border-left: 4px solid #f59e0b;
-        padding: 1rem;
-        margin: 0.5rem 0;
+        background-color: #fefbeb;
+        border-left: 6px solid #f59e0b;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-radius: 8px;
     }
     .risk-medium {
-        background-color: #ecfdf5;
-        border-left: 4px solid #10b981;
-        padding: 1rem;
-        margin: 0.5rem 0;
+        background-color: #f0fdf4;
+        border-left: 6px solid #10b981;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-radius: 8px;
     }
     .benchmark-excellent {
-        background-color: #dcfce7;
-        border-left: 4px solid #16a34a;
-        padding: 0.5rem;
-        margin: 0.25rem 0;
+        background-color: #f0fdf4;
+        border-left: 6px solid #16a34a;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border-radius: 6px;
     }
     .benchmark-good {
-        background-color: #fef3c7;
-        border-left: 4px solid #d97706;
-        padding: 0.5rem;
-        margin: 0.25rem 0;
+        background-color: #fefbeb;
+        border-left: 6px solid #d97706;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border-radius: 6px;
     }
     .benchmark-needs-improvement {
-        background-color: #fee2e2;
-        border-left: 4px solid #dc2626;
-        padding: 0.5rem;
-        margin: 0.25rem 0;
+        background-color: #fef2f2;
+        border-left: 6px solid #dc2626;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border-radius: 6px;
     }
-    .cost-breakdown {
+    .licensing-framework {
         background-color: #f8fafc;
         border: 2px solid #e2e8f0;
-        padding: 1rem;
+        padding: 2rem;
         border-radius: 8px;
+        margin: 1.5rem 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    .section-header {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1e3a8a;
+        margin: 2rem 0 1rem 0;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 0.5rem;
+    }
+    .subsection-header {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #374151;
+        margin: 1.5rem 0 1rem 0;
+    }
+    .metric-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.5rem;
         margin: 0.5rem 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .data-table {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Title and enterprise badge
-st.markdown('<h1 class="main-header">💰 Enterprise SQL AlwaysOn Scaling Planner with Cost Analysis</h1>', unsafe_allow_html=True)
-st.markdown('<div class="enterprise-badge">ENTERPRISE GRADE • REAL-TIME AWS PRICING • MICROSOFT LICENSING • TCO ANALYSIS • ITIL 4 ALIGNED • GOVERNANCE READY</div>', unsafe_allow_html=True)
+# Corporate header and branding
+st.markdown('<h1 class="main-header">Enterprise SQL Server Infrastructure Planning Platform</h1>', unsafe_allow_html=True)
+st.markdown('''
+<div class="enterprise-badge">
+Strategic Planning | Total Cost of Ownership Analysis | Infrastructure Automation | Service Management Framework | Governance & Compliance
+</div>
+''', unsafe_allow_html=True)
 
 # Show AWS integration status
 if not BOTO3_AVAILABLE:
-    st.info("💡 AWS real-time pricing unavailable (boto3 not installed). Using fallback pricing data. To enable real-time pricing, install boto3: `pip install boto3`")
+    st.info("Real-time AWS pricing integration unavailable. Using representative pricing data. To enable live pricing updates, install boto3 package and configure AWS credentials.")
 
 # AWS Pricing API Integration
 @st.cache_data(ttl=3600)  # Cache for 1 hour
@@ -472,26 +531,26 @@ if 'automation_components' not in st.session_state:
     }
 
 # Sidebar configuration
-st.sidebar.header("🎛️ Enterprise Configuration")
+st.sidebar.header("Configuration Panel")
 
 # Deployment Type Selection
-st.sidebar.subheader("🏗️ Deployment Architecture")
+st.sidebar.subheader("Architecture Configuration")
 deployment_type = st.sidebar.selectbox(
-    "Deployment Type",
+    "Deployment Architecture",
     ["AlwaysOn Cluster", "Standalone SQL Server"],
-    help="Choose between SQL Server AlwaysOn clusters or standalone instances"
+    help="Select between SQL Server AlwaysOn high availability clusters or standalone instances"
 )
 
 # Current State Configuration
-st.sidebar.subheader("🏢 Current State Assessment")
+st.sidebar.subheader("Current Infrastructure Assessment")
 current_clusters = st.sidebar.number_input(
     f"Current {'Clusters' if deployment_type == 'AlwaysOn Cluster' else 'Instances'}", 
     min_value=1, max_value=1000, value=5
 )
-current_resources = st.sidebar.number_input("Team Size", min_value=1, max_value=50, value=6)
+current_resources = st.sidebar.number_input("Current Team Size", min_value=1, max_value=50, value=6)
 
 # Instance Configuration
-st.sidebar.subheader("💻 Instance Configuration")
+st.sidebar.subheader("Compute Configuration")
 available_instances = list(set(
     list(pricing_data['ec2_windows'].keys()) + 
     list(pricing_data['ec2_sql_standard'].keys())
@@ -501,12 +560,12 @@ available_instances.sort()
 instance_type = st.sidebar.selectbox(
     "EC2 Instance Type",
     available_instances,
-    help="SQL Server optimized EC2 instance types"
+    help="Select EC2 instance type optimized for SQL Server workloads"
 )
 
 current_cpu_cores = st.sidebar.number_input("CPU Cores per Instance", min_value=8, max_value=128, value=32)
-current_memory_gb = st.sidebar.number_input("Memory GB per Instance", min_value=64, max_value=1024, value=256)
-current_storage_tb = st.sidebar.number_input("Storage TB per Instance", min_value=1, max_value=100, value=10)
+current_memory_gb = st.sidebar.number_input("Memory (GB) per Instance", min_value=64, max_value=1024, value=256)
+current_storage_tb = st.sidebar.number_input("Storage (TB) per Instance", min_value=1, max_value=100, value=10)
 
 if deployment_type == "AlwaysOn Cluster":
     ec2_per_cluster = st.sidebar.number_input("EC2 Instances per Cluster", min_value=2, max_value=10, value=3)
@@ -517,40 +576,40 @@ else:
 sql_edition = st.sidebar.selectbox(
     "SQL Server Edition",
     ["Standard", "Enterprise", "Web"],
-    help="Choose SQL Server edition for licensing calculations"
+    help="Select SQL Server edition for licensing and cost calculations"
 )
 
 # EBS Configuration
-st.sidebar.subheader("💾 Storage Configuration")
+st.sidebar.subheader("Storage Configuration")
 ebs_volume_type = st.sidebar.selectbox(
     "EBS Volume Type",
     ["gp3", "gp2", "io2", "io1"],
-    help="Choose EBS volume type for storage"
+    help="Select Amazon EBS volume type for storage performance requirements"
 )
 
 # Patch Management
 enable_ssm_patching = st.sidebar.checkbox(
-    "Enable AWS SSM Patch Management",
+    "AWS Systems Manager Patch Management",
     value=True,
-    help="Automated patching with AWS Systems Manager"
+    help="Enable automated patching with AWS Systems Manager for operational efficiency"
 )
 
 # Target State Configuration
-st.sidebar.subheader("🎯 Target State")
+st.sidebar.subheader("Target State Planning")
 target_clusters = st.sidebar.number_input(
     f"Target {'Clusters' if deployment_type == 'AlwaysOn Cluster' else 'Instances'}", 
     min_value=current_clusters, max_value=10000, value=100
 )
-timeframe = st.sidebar.number_input("Timeframe (months)", min_value=6, max_value=60, value=24)
+timeframe = st.sidebar.number_input("Implementation Timeframe (months)", min_value=6, max_value=60, value=24)
 
-# SLA Requirements
-st.sidebar.subheader("📊 SLA Requirements")
+# Service Level Requirements
+st.sidebar.subheader("Service Level Requirements")
 availability_target = st.sidebar.slider("Availability Target (%)", 95.0, 99.99, 99.9, 0.01)
-rpo_minutes = st.sidebar.slider("RPO (minutes)", 5, 1440, 60, 5)
-rto_minutes = st.sidebar.slider("RTO (minutes)", 15, 1440, 240, 15)
+rpo_minutes = st.sidebar.slider("Recovery Point Objective (minutes)", 5, 1440, 60, 5)
+rto_minutes = st.sidebar.slider("Recovery Time Objective (minutes)", 15, 1440, 240, 15)
 
 # Support model
-support_24x7 = st.sidebar.checkbox("24x7 Global Support", value=False)
+support_24x7 = st.sidebar.checkbox("24x7 Global Support Coverage", value=False)
 
 # Cost calculation functions
 def calculate_infrastructure_costs(clusters, instance_type, instances_per_cluster, storage_tb, ebs_type, enable_patching, sql_edition):
@@ -724,7 +783,7 @@ current_tco = calculate_total_cost_of_ownership(current_clusters, timeframe)
 target_tco = calculate_total_cost_of_ownership(target_clusters, timeframe)
 
 # Executive Dashboard with Cost Metrics
-st.subheader("💰 Executive Cost Dashboard")
+st.markdown('<div class="section-header">Executive Dashboard & Financial Analysis</div>', unsafe_allow_html=True)
 
 # Cost summary section
 col1, col2 = st.columns(2)
@@ -732,10 +791,10 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown(f"""
     <div class="cost-summary">
-        <h3>💰 Total Cost of Ownership</h3>
+        <h3>Total Cost of Ownership Analysis</h3>
         <h2>${target_tco['total_tco']:,.0f}</h2>
-        <p>{timeframe} months • {target_clusters} {deployment_type.lower()}s</p>
-        <p>Monthly: ${target_tco['monthly_total']:,.0f}</p>
+        <p>{timeframe}-month projection | {target_clusters} {deployment_type.lower()}s</p>
+        <p>Monthly Operating Cost: ${target_tco['monthly_total']:,.0f}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -744,61 +803,63 @@ with col2:
     optimized_tco = target_tco['total_tco'] - potential_savings
     st.markdown(f"""
     <div class="savings-highlight">
-        <h3>💡 Automation Savings</h3>
+        <h3>Automation Optimization Potential</h3>
         <h2>${potential_savings:,.0f}</h2>
-        <p>{metrics['cost_savings_percentage']:.1f}% reduction potential</p>
+        <p>{metrics['cost_savings_percentage']:.1f}% cost reduction through automation</p>
         <p>Optimized TCO: ${optimized_tco:,.0f}</p>
     </div>
     """, unsafe_allow_html=True)
 
-# Detailed metrics row
+# Executive metrics row
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 with col1:
     st.markdown(f"""
     <div class="operational-metrics">
-        <h4>🔧 Automation</h4>
+        <h4>Automation Maturity</h4>
         <h3>{metrics['automation_maturity']:.0f}%</h3>
-        <p>Maturity Level</p>
+        <p>Framework Coverage</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
     st.markdown(f"""
     <div class="operational-metrics">
-        <h4>📚 ITIL</h4>
+        <h4>ITIL Compliance</h4>
         <h3>{metrics['itil_maturity']:.0f}%</h3>
-        <p>Practice Coverage</p>
+        <p>Practice Implementation</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col3:
-    availability_color = "🟢" if availability_target >= 99.9 else "🟡" if availability_target >= 99.5 else "🔴"
-    st.metric(f"{availability_color} Availability", f"{availability_target}%")
+    availability_status = "Tier 4" if availability_target >= 99.99 else "Tier 3" if availability_target >= 99.9 else "Tier 2"
+    st.metric("Service Availability", f"{availability_target}%", delta=availability_status)
 
 with col4:
-    st.metric("📈 Scale Factor", f"{metrics['scale_factor']:.1f}x")
+    st.metric("Infrastructure Scale Factor", f"{metrics['scale_factor']:.1f}x")
 
 with col5:
-    st.metric("👥 Skills Gap", f"{metrics['total_skill_gap']} roles")
+    st.metric("Resource Requirements Gap", f"{metrics['total_skill_gap']} positions")
 
 with col6:
-    st.metric("💻 EC2 Instances", f"{metrics['target_ec2_instances']}")
+    st.metric("Total Compute Instances", f"{metrics['target_ec2_instances']}")
 
-# Skills & Workforce Planning - Operations Focus with Monthly Forecasting (RESTORED)
-st.subheader("👥 Operations Team Skills & Workforce Planning")
+# Skills & Workforce Planning
+st.markdown('<div class="section-header">Workforce Planning & Resource Requirements</div>', unsafe_allow_html=True)
 
 st.markdown(f"""
-**📊 Operations team requirements are dynamically calculated based on your scaling parameters:**
-- **Target Clusters:** {target_clusters} clusters
-- **Automation Level:** {metrics['automation_maturity']:.0f}% (reduces staffing needs by up to 30%)
-- **Support Model:** {'24x7 Global' if support_24x7 else 'Business Hours'} (affects staffing requirements)
-- **Focus:** Core operations roles for SQL Server and infrastructure management
-""")
+<div class="executive-summary">
+<h4>Strategic Workforce Analysis</h4>
+<p><strong>Infrastructure Scale:</strong> {target_clusters} {deployment_type.lower()}s planned over {timeframe} months</p>
+<p><strong>Automation Impact:</strong> {metrics['automation_maturity']:.0f}% automation maturity reduces workforce requirements by up to 30%</p>
+<p><strong>Service Coverage:</strong> {'Continuous operations (24x7)' if support_24x7 else 'Standard business hours'} support model</p>
+<p><strong>Focus Areas:</strong> Core operational roles for SQL Server administration and infrastructure management</p>
+</div>
+""", unsafe_allow_html=True)
 
 # Current staffing input section
-st.markdown("### 🔍 Current Operations Team Composition")
-st.write("Enter your current staffing levels for each operations role:")
+st.markdown('<div class="subsection-header">Current Resource Allocation</div>', unsafe_allow_html=True)
+st.write("Configure current staffing levels for operational assessment:")
 
 skills_input_cols = st.columns(3)
 operations_roles = ['SQL Server DBA Expert', 'Infrastructure Automation', 'ITIL Service Manager']
@@ -815,7 +876,7 @@ for i, role in enumerate(operations_roles):
         st.session_state.current_skills[role] = current_count
 
 # Calculate requirements and create comparison table
-st.markdown("### 📊 Operations Skills Gap Analysis")
+st.markdown('<div class="subsection-header">Resource Gap Analysis</div>', unsafe_allow_html=True)
 
 required_skills = calculate_skills_requirements(target_clusters, metrics['automation_maturity'], support_24x7)
 
@@ -830,7 +891,7 @@ for role in required_skills.keys():
         'Current Staff': current,
         'Required for Target': required,
         'Gap': gap if gap > 0 else 0,
-        'Status': '✅ Adequate' if gap == 0 else f'⚠️ Need {gap} more',
+        'Status': 'Adequate' if gap == 0 else f'Shortfall: {gap} positions',
         'Certification Required': skills_certifications[role]
     })
 
@@ -839,22 +900,22 @@ skills_df = pd.DataFrame(skills_data)
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    st.dataframe(skills_df[['Role', 'Current Staff', 'Required for Target', 'Gap', 'Status', 'Certification Required']], use_container_width=True)
+    st.dataframe(skills_df[['Role', 'Current Staff', 'Required for Target', 'Gap', 'Status', 'Certification Required']], width='stretch')
     
-    with st.expander("📖 How Skills Requirements Are Calculated"):
+    with st.expander("Methodology: Resource Requirements Calculation"):
         st.markdown("""
-        **Calculation Methodology (Operations Focused):**
+        **Calculation Framework (Operations-Focused):**
         
-        1. **Base Requirements by Role:**
-           - SQL Server DBA Expert: 1 per 15 clusters  
-           - Infrastructure Automation: 1 per 30 clusters
-           - ITIL Service Manager: 1 per 50 clusters
+        1. **Base Resource Requirements by Role:**
+           - SQL Server DBA Expert: 1 FTE per 15 infrastructure clusters
+           - Infrastructure Automation: 1 FTE per 30 infrastructure clusters  
+           - ITIL Service Manager: 1 FTE per 50 infrastructure clusters
         
-        2. **Automation Impact:** Up to 30% reduction in requirements with full automation
+        2. **Automation Efficiency Factor:** Up to 30% reduction in staffing requirements with mature automation
         
-        3. **24x7 Support Multiplier:** 40% increase for round-the-clock coverage
+        3. **Service Coverage Multiplier:** 40% increase for continuous operations (24x7) coverage
         
-        4. **Role-Specific Adjustments:** Infrastructure Automation benefits more from automation than DBA and ITIL roles
+        4. **Role-Specific Adjustments:** Infrastructure automation roles benefit more from technology adoption than administrative and service management roles
         """)
 
 with col2:
@@ -862,27 +923,27 @@ with col2:
     total_required = sum(required_skills.values())
     total_gap = sum(max(0, required_skills[role] - st.session_state.current_skills.get(role, 0)) for role in required_skills.keys())
     
-    st.metric("👥 Current Team Size", f"{total_current}")
-    st.metric("🎯 Required Team Size", f"{total_required}")
-    st.metric("⚠️ Total Skills Gap", f"{total_gap}")
+    st.metric("Current Workforce", f"{total_current} FTE")
+    st.metric("Target Workforce", f"{total_required} FTE")
+    st.metric("Resource Gap", f"{total_gap} positions")
     
     if total_required > 0:
         skills_readiness = max(0, 100 - (total_gap / total_required * 100))
-        st.metric("📊 Skills Readiness", f"{skills_readiness:.0f}%")
+        st.metric("Workforce Readiness", f"{skills_readiness:.0f}%")
         
         if skills_readiness >= 90:
-            st.success("✅ Team Ready")
+            st.success("Workforce adequately prepared")
         elif skills_readiness >= 70:
-            st.warning("⚠️ Minor Gaps")
+            st.warning("Minor resource gaps identified")
         else:
-            st.error("⛔ Significant Gaps")
+            st.error("Significant resource shortfalls")
     
     if metrics['automation_maturity'] > 30:
-        st.info(f"💡 Automation is reducing your staffing needs by ~{metrics['automation_maturity']/100*30:.0f}%")
+        st.info(f"Automation framework reduces staffing requirements by approximately {metrics['automation_maturity']/100*30:.0f}%")
 
-# Monthly Forecasting System (RESTORED)
+# Monthly Forecasting System
 st.markdown("---")
-st.markdown("### 📅 Monthly Scaling Forecast & Staffing Roadmap")
+st.markdown('<div class="subsection-header">Strategic Resource Planning Forecast</div>', unsafe_allow_html=True)
 
 def calculate_monthly_forecast():
     """Calculate month-by-month scaling forecast from current to target clusters"""
@@ -938,17 +999,6 @@ def calculate_monthly_forecast():
             new_hires_needed[role] = new_hires_this_role
             total_new_hires += new_hires_this_role
         
-        avg_salary_by_role = {
-            'SQL Server DBA Expert': 95000,
-            'Infrastructure Automation': 85000,
-            'ITIL Service Manager': 80000
-        }
-        
-        monthly_cost = sum(
-            month_required_skills.get(role, 0) * avg_salary_by_role[role] / 12
-            for role in avg_salary_by_role.keys()
-        )
-        
         forecast_data.append({
             'month': month,
             'clusters': int(month_clusters),
@@ -956,7 +1006,6 @@ def calculate_monthly_forecast():
             'required_skills': month_required_skills,
             'new_hires_needed': new_hires_needed,
             'total_new_hires': total_new_hires,
-            'monthly_cost': monthly_cost,
             'total_team_size': sum(month_required_skills.values())
         })
     
@@ -975,58 +1024,58 @@ with col1:
     
     fig = make_subplots(
         rows=2, cols=1,
-        subplot_titles=('Cluster Growth & Team Size', 'Automation Maturity Growth'),
+        subplot_titles=('Infrastructure Scale & Team Growth', 'Automation Maturity Progression'),
         specs=[[{"secondary_y": True}], [{"secondary_y": False}]]
     )
     
     fig.add_trace(
-        go.Scatter(x=months, y=clusters, name="Clusters", line=dict(color='blue', width=3)),
+        go.Scatter(x=months, y=clusters, name="Infrastructure Clusters", line=dict(color='#1e40af', width=3)),
         row=1, col=1
     )
     fig.add_trace(
-        go.Scatter(x=months, y=team_sizes, name="Team Size", line=dict(color='green', width=3)),
+        go.Scatter(x=months, y=team_sizes, name="Team Size", line=dict(color='#059669', width=3)),
         row=1, col=1, secondary_y=True
     )
     
     fig.add_trace(
-        go.Scatter(x=months, y=automation_levels, name="Automation %", 
-                  line=dict(color='orange', width=3), fill='tonexty'),
+        go.Scatter(x=months, y=automation_levels, name="Automation Maturity %", 
+                  line=dict(color='#dc2626', width=3), fill='tonexty'),
         row=2, col=1
     )
     
-    fig.update_layout(height=500, title_text="📈 Scaling Forecast Overview")
-    fig.update_xaxes(title_text="Timeline", row=2, col=1)
-    fig.update_yaxes(title_text="Clusters", row=1, col=1)
-    fig.update_yaxes(title_text="Team Members", row=1, col=1, secondary_y=True)
+    fig.update_layout(height=500, title_text="Strategic Scaling Forecast Overview")
+    fig.update_xaxes(title_text="Implementation Timeline", row=2, col=1)
+    fig.update_yaxes(title_text="Infrastructure Clusters", row=1, col=1)
+    fig.update_yaxes(title_text="Team Members (FTE)", row=1, col=1, secondary_y=True)
     fig.update_yaxes(title_text="Automation Maturity (%)", row=2, col=1)
     
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
-    st.markdown("### 🎯 Key Forecast Metrics")
+    st.markdown("### Key Forecast Metrics")
     
     total_hires_needed = sum(d['total_new_hires'] for d in forecast_data)
     peak_monthly_hires = max(d['total_new_hires'] for d in forecast_data)
     final_team_size = forecast_data[-1]['total_team_size']
     
-    st.metric("👥 Total New Hires", f"{total_hires_needed}")
-    st.metric("📊 Peak Monthly Hiring", f"{peak_monthly_hires}")
-    st.metric("🎯 Final Team Size", f"{final_team_size}")
-    st.metric("⚡ Final Automation Level", f"{forecast_data[-1]['automation_maturity']:.0f}%")
+    st.metric("Total New Positions", f"{total_hires_needed}")
+    st.metric("Peak Monthly Hiring", f"{peak_monthly_hires}")
+    st.metric("Final Team Size", f"{final_team_size} FTE")
+    st.metric("Final Automation Level", f"{forecast_data[-1]['automation_maturity']:.0f}%")
     
     urgent_months = [d for d in forecast_data if d['total_new_hires'] > 2]
     if urgent_months:
-        st.warning(f"⚠️ High hiring periods: {len(urgent_months)} months need 3+ hires")
+        st.warning(f"High-intensity hiring periods: {len(urgent_months)} months require 3+ new hires")
     
     if total_hires_needed > 8:
-        st.error("🚨 Consider phased approach - high hiring volume")
+        st.error("Consider phased implementation approach due to high hiring volume")
     elif total_hires_needed > 4:
-        st.warning("⚠️ Moderate hiring needs - plan recruitment")
+        st.warning("Moderate hiring requirements - strategic recruitment planning needed")
     else:
-        st.success("✅ Manageable hiring requirements")
+        st.success("Manageable hiring requirements within normal recruitment capacity")
 
-# Detailed monthly breakdown (RESTORED)
-st.markdown("### 📊 Detailed Monthly Roadmap")
+# Detailed monthly breakdown
+st.markdown('<div class="subsection-header">Monthly Implementation Roadmap</div>', unsafe_allow_html=True)
 
 monthly_breakdown = []
 for data in forecast_data:
@@ -1041,60 +1090,60 @@ for data in forecast_data:
         
         for role in ['SQL Server DBA Expert', 'Infrastructure Automation', 'ITIL Service Manager']:
             if data['new_hires_needed'].get(role, 0) > 0:
-                month_row[f'{role} Hires'] = data['new_hires_needed'][role]
+                month_row[f'{role} Positions'] = data['new_hires_needed'][role]
         
         monthly_breakdown.append(month_row)
 
 breakdown_df = pd.DataFrame(monthly_breakdown)
-st.dataframe(breakdown_df, use_container_width=True)
+    st.dataframe(breakdown_df, width='stretch')
 
-# Hiring recommendations (RESTORED)
-st.markdown("### 🎯 Strategic Hiring Recommendations")
+# Hiring recommendations
+st.markdown('<div class="subsection-header">Strategic Hiring Recommendations</div>', unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown("#### 🥇 Priority 1: SQL Server DBA")
+    st.markdown("#### Priority 1: SQL Server DBA Expertise")
     dba_hires = sum(d['new_hires_needed'].get('SQL Server DBA Expert', 0) for d in forecast_data)
-    st.write(f"**Total needed:** {dba_hires}")
-    st.write("**Timeline:** Start immediately")
-    st.write("**Lead time:** 2-3 months")
-    st.write("**Focus:** SQL Server AlwaysOn expertise")
+    st.write(f"**Total positions needed:** {dba_hires}")
+    st.write("**Recommended timeline:** Immediate commencement")
+    st.write("**Typical lead time:** 2-3 months")
+    st.write("**Focus competencies:** SQL Server AlwaysOn architecture")
 
 with col2:
-    st.markdown("#### 🥈 Priority 2: Infrastructure Automation")
+    st.markdown("#### Priority 2: Infrastructure Automation")
     infra_hires = sum(d['new_hires_needed'].get('Infrastructure Automation', 0) for d in forecast_data)
-    st.write(f"**Total needed:** {infra_hires}")
-    st.write("**Timeline:** Month 2-3")
-    st.write("**Lead time:** 1-2 months")
-    st.write("**Focus:** Terraform, AWS automation")
+    st.write(f"**Total positions needed:** {infra_hires}")
+    st.write("**Recommended timeline:** Month 2-3")
+    st.write("**Typical lead time:** 1-2 months")
+    st.write("**Focus competencies:** Terraform, AWS automation")
 
 with col3:
-    st.markdown("#### 🥉 Priority 3: ITIL Service Manager")
+    st.markdown("#### Priority 3: ITIL Service Management")
     itil_hires = sum(d['new_hires_needed'].get('ITIL Service Manager', 0) for d in forecast_data)
-    st.write(f"**Total needed:** {itil_hires}")
-    st.write("**Timeline:** Month 4-6")
-    st.write("**Lead time:** 1-2 months") 
-    st.write("**Focus:** Service operations, incident mgmt")
+    st.write(f"**Total positions needed:** {itil_hires}")
+    st.write("**Recommended timeline:** Month 4-6")
+    st.write("**Typical lead time:** 1-2 months") 
+    st.write("**Focus competencies:** Service operations, incident management")
 
-# Risk assessment for hiring plan (RESTORED)
+# Risk assessment for hiring plan
 st.markdown("---")
-st.markdown("### ⚠️ Hiring Plan Risk Assessment")
+st.markdown('<div class="subsection-header">Hiring Plan Risk Assessment</div>', unsafe_allow_html=True)
 
 hiring_risks = []
 
 if total_hires_needed > 10:
     hiring_risks.append({
-        'risk': 'High volume hiring may strain recruitment and training capacity',
-        'impact': 'Delayed onboarding, quality issues',
-        'mitigation': 'Consider external recruiters, structured onboarding program'
+        'risk': 'High-volume hiring may strain recruitment capacity and training resources',
+        'impact': 'Delayed onboarding timelines, potential quality compromises',
+        'mitigation': 'Engage external recruitment partners, implement structured onboarding program'
     })
 
 if peak_monthly_hires > 3:
     hiring_risks.append({
-        'risk': 'Peak hiring months may overwhelm team integration',
-        'impact': 'Reduced productivity, cultural integration issues',
-        'mitigation': 'Stagger start dates, assign mentors, extended onboarding'
+        'risk': 'Peak hiring periods may overwhelm team integration processes',
+        'impact': 'Reduced productivity during integration, cultural assimilation challenges',
+        'mitigation': 'Stagger start dates, assign dedicated mentors, extend onboarding periods'
     })
 
 skill_gaps = [role for role, gap in {
@@ -1106,8 +1155,8 @@ skill_gaps = [role for role, gap in {
 if skill_gaps:
     hiring_risks.append({
         'risk': f'High demand for specialized roles: {", ".join(skill_gaps)}',
-        'impact': 'Difficulty finding qualified candidates, salary inflation',
-        'mitigation': 'Early recruitment, internal training programs, contractor bridge'
+        'impact': 'Market scarcity, compensation inflation, extended recruitment cycles',
+        'mitigation': 'Early recruitment initiation, internal development programs, contractor bridge solutions'
     })
 
 if hiring_risks:
@@ -1115,15 +1164,15 @@ if hiring_risks:
         st.markdown(f"""
         <div class="risk-high">
             <strong>Risk:</strong> {risk['risk']}<br>
-            <strong>Impact:</strong> {risk['impact']}<br>
-            <strong>Mitigation:</strong> {risk['mitigation']}
+            <strong>Business Impact:</strong> {risk['impact']}<br>
+            <strong>Mitigation Strategy:</strong> {risk['mitigation']}
         </div>
         """, unsafe_allow_html=True)
 else:
-    st.success("🎉 Hiring plan appears manageable with standard recruitment processes!")
+    st.success("Hiring plan appears manageable within standard organizational recruitment processes.")
 
-# ITIL 4 Service Management Framework (RESTORED)
-st.subheader("📚 ITIL 4 Service Management Practices")
+# ITIL 4 Service Management Framework
+st.markdown('<div class="section-header">ITIL 4 Service Management Framework</div>', unsafe_allow_html=True)
 
 itil_cols = st.columns(4)
 for i, (practice, data) in enumerate(st.session_state.itil_practices.items()):
@@ -1144,31 +1193,31 @@ for i, (practice, data) in enumerate(st.session_state.itil_practices.items()):
             )
             st.session_state.itil_practices[practice]['maturity'] = maturity
         
-        priority_color = {
-            'Critical': '🔴',
-            'High': '🟡', 
-            'Medium': '🟢'
+        priority_indicator = {
+            'Critical': 'HIGH PRIORITY',
+            'High': 'MEDIUM PRIORITY', 
+            'Medium': 'STANDARD PRIORITY'
         }
-        st.caption(f"{priority_color[data['priority']]} {data['priority']} Priority")
+        st.caption(f"{priority_indicator[data['priority']]}")
         
         st.session_state.itil_practices[practice]['implemented'] = implemented
 
-# Enhanced Automation Components (RESTORED)
-st.subheader("⚡ Enterprise Automation Framework")
+# Enhanced Automation Components
+st.markdown('<div class="section-header">Enterprise Automation Framework</div>', unsafe_allow_html=True)
 
 categories = {
-    'Infrastructure': '🗗️',
-    'Database': '🗄️',
-    'Security': '🔒',
-    'Operations': '⚙️',
-    'Backup': '💾',
-    'Integration': '🔗',
-    'Portal': '📱'
+    'Infrastructure': 'Infrastructure & Cloud Services',
+    'Database': 'Database & Performance Management',
+    'Security': 'Security & Compliance',
+    'Operations': 'Operations & Monitoring',
+    'Backup': 'Backup & Recovery',
+    'Integration': 'Integration & Connectivity',
+    'Portal': 'Self-Service Portal'
 }
 
-tabs = st.tabs([f"{icon} {cat}" for cat, icon in categories.items()])
+tabs = st.tabs([f"{cat}" for cat in categories.values()])
 
-for tab, (category, icon) in zip(tabs, categories.items()):
+for tab, (category, display_name) in zip(tabs, categories.items()):
     with tab:
         category_components = [
             (name, comp) for name, comp in st.session_state.automation_components.items()
@@ -1187,39 +1236,39 @@ for tab, (category, icon) in zip(tabs, categories.items()):
                 
                 st.caption(comp_data['description'])
                 
-                impact_color = {'Critical': '🔴', 'High': '🟡', 'Medium': '🟢'}
-                complexity_color = {'High': '🔴', 'Medium': '🟡', 'Low': '🟢'}
+                impact_levels = {'Critical': 'CRITICAL', 'High': 'HIGH', 'Medium': 'MEDIUM'}
+                complexity_levels = {'High': 'HIGH', 'Medium': 'MEDIUM', 'Low': 'LOW'}
                 
-                st.caption(f"**Impact:** {impact_color[comp_data['business_impact']]} {comp_data['business_impact']} | "
-                          f"**Complexity:** {complexity_color[comp_data['technical_complexity']]} {comp_data['technical_complexity']}")
+                st.caption(f"**Business Impact:** {impact_levels[comp_data['business_impact']]} | "
+                          f"**Technical Complexity:** {complexity_levels[comp_data['technical_complexity']]}")
                 
                 st.session_state.automation_components[comp_name]['enabled'] = enabled
             
             with col2:
-                st.write(f"**Weight:** {comp_data['weight']}%")
-                st.write(f"**Effort:** {comp_data['effort']}h")
-                st.write(f"**Savings:** {comp_data['cost_savings']}%")
+                st.write(f"**Priority Weight:** {comp_data['weight']}%")
+                st.write(f"**Implementation Effort:** {comp_data['effort']} hours")
+                st.write(f"**Cost Savings:** {comp_data['cost_savings']}%")
             
             st.markdown("---")
 
-# Enterprise Risk Assessment (RESTORED)
-st.subheader("🛡️ Enterprise Risk Assessment & Governance")
+# Enterprise Risk Assessment
+st.markdown('<div class="section-header">Enterprise Risk Assessment & Governance</div>', unsafe_allow_html=True)
 
 if metrics['risks']:
     for risk in metrics['risks']:
         severity_class = f"risk-{risk['severity'].lower()}"
         st.markdown(f"""
         <div class="{severity_class}">
-            <strong>{risk['category']} Risk - {risk['severity']}: {risk['risk']}</strong><br>
+            <strong>{risk['category']} Risk - {risk['severity']} Severity: {risk['risk']}</strong><br>
             <em>Business Impact:</em> {risk['impact']}<br>
-            <em>Governance Action Required:</em> Implement corresponding automation and governance controls
+            <em>Governance Action Required:</em> Implement corresponding automation controls and governance frameworks
         </div>
         """, unsafe_allow_html=True)
 else:
-    st.success("🎉 Enterprise risk profile is well-managed with current automation strategy!")
+    st.success("Enterprise risk profile is well-managed with current automation strategy implementation.")
 
-# Industry Benchmark Comparison (RESTORED)
-st.subheader("📈 Industry Benchmark Assessment")
+# Industry Benchmark Comparison
+st.markdown('<div class="section-header">Industry Benchmark Assessment</div>', unsafe_allow_html=True)
 
 benchmark_scores = {
     'Database Availability': {
@@ -1240,11 +1289,11 @@ benchmark_scores = {
         'industry_leader': 90,
         'unit': '%'
     },
-    'RTO Performance': {
+    'Recovery Time Objective': {
         'our_score': rto_minutes,
         'industry_avg': 240,
         'industry_leader': 60,
-        'unit': 'min',
+        'unit': 'minutes',
         'lower_is_better': True
     }
 }
@@ -1255,40 +1304,40 @@ for metric_name, scores in benchmark_scores.items():
     if lower_is_better:
         if scores['our_score'] <= scores['industry_leader']:
             benchmark_class = "benchmark-excellent"
-            status = "🏆 Industry Leading"
+            status = "INDUSTRY LEADING"
         elif scores['our_score'] <= scores['industry_avg']:
             benchmark_class = "benchmark-good"
-            status = "✅ Above Average"
+            status = "ABOVE AVERAGE"
         else:
             benchmark_class = "benchmark-needs-improvement"
-            status = "⚠️ Needs Improvement"
+            status = "IMPROVEMENT REQUIRED"
     else:
         if scores['our_score'] >= scores['industry_leader']:
             benchmark_class = "benchmark-excellent"
-            status = "🏆 Industry Leading"
+            status = "INDUSTRY LEADING"
         elif scores['our_score'] >= scores['industry_avg']:
             benchmark_class = "benchmark-good"
-            status = "✅ Above Average"
+            status = "ABOVE AVERAGE"
         else:
             benchmark_class = "benchmark-needs-improvement"
-            status = "⚠️ Needs Improvement"
+            status = "IMPROVEMENT REQUIRED"
     
     st.markdown(f"""
     <div class="{benchmark_class}">
         <strong>{metric_name}:</strong> {scores['our_score']}{scores['unit']} | 
-        Industry Avg: {scores['industry_avg']}{scores['unit']} | 
-        Leader: {scores['industry_leader']}{scores['unit']} | 
-        <em>{status}</em>
+        Industry Average: {scores['industry_avg']}{scores['unit']} | 
+        Industry Leader: {scores['industry_leader']}{scores['unit']} | 
+        <em>Status: {status}</em>
     </div>
     """, unsafe_allow_html=True)
 
-# Enterprise Governance Framework (RESTORED)
-st.subheader("🏛️ Enterprise Governance Framework")
+# Enterprise Governance Framework
+st.markdown('<div class="section-header">Enterprise Governance Framework</div>', unsafe_allow_html=True)
 
 st.markdown("""
-<div class="governance-section">
-    <h4>📊 Governance Bodies & Committees</h4>
-    <p>Essential governance structures for enterprise-scale SQL Server operations:</p>
+<div class="governance-framework">
+    <h4>Governance Bodies & Committee Structure</h4>
+    <p>Essential governance structures for enterprise-scale SQL Server operations management:</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1306,11 +1355,11 @@ for i, item in enumerate(governance_items):
         st.session_state.governance_framework[item] = enabled
 
 governance_maturity = sum(st.session_state.governance_framework.values()) / len(st.session_state.governance_framework) * 100
-st.metric("🏛️ Governance Maturity", f"{governance_maturity:.0f}%")
+st.metric("Governance Maturity Level", f"{governance_maturity:.0f}%")
 
-# Cost Analysis Sections (NEW)
+# Cost Analysis Sections
 st.markdown("---")
-st.subheader("💰 Comprehensive Cost Analysis")
+st.markdown('<div class="section-header">Comprehensive Cost Analysis</div>', unsafe_allow_html=True)
 
 # TCO Breakdown Chart
 fig_tco = go.Figure(data=[
@@ -1318,15 +1367,18 @@ fig_tco = go.Figure(data=[
         name='Cost Components',
         x=list(target_tco['tco_breakdown'].keys()),
         y=list(target_tco['tco_breakdown'].values()),
-        marker_color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+        marker_color=['#1e40af', '#dc2626', '#059669', '#f59e0b', '#7c3aed']
     )
 ])
 
 fig_tco.update_layout(
-    title=f"Total Cost of Ownership Breakdown ({timeframe} months)",
+    title=f"Total Cost of Ownership Analysis - {timeframe} Month Projection",
     xaxis_title="Cost Components",
-    yaxis_title="Cost ($)",
-    height=400
+    yaxis_title="Total Cost (USD)",
+    height=400,
+    font=dict(family="Arial, sans-serif", size=12),
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)'
 )
 
 st.plotly_chart(fig_tco, use_container_width=True)
@@ -1476,8 +1528,8 @@ with col2:
     if governance_maturity < 70:
         recommendations.append("🏛️ Implement enterprise governance framework")
     
-    if target_tco['licensing']['monthly_cost'] > target_tco['infrastructure']['total_monthly']:
-        recommendations.append("💰 Review SQL Server licensing strategy - exceeds infrastructure costs")
+    if target_tco['infrastructure']['sql_licensing_monthly'] > target_tco['infrastructure']['ec2_compute_monthly']:
+        recommendations.append("Review SQL Server licensing strategy - licensing costs exceed compute infrastructure")
     
     if not recommendations:
         recommendations.append("✅ Continue execution of current strategy")
