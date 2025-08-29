@@ -6,9 +6,15 @@ from plotly.subplots import make_subplots
 import numpy as np
 from datetime import datetime, timedelta
 import math
-import boto3
-import json
-from decimal import Decimal
+
+# Optional AWS integration - gracefully handle if boto3 not installed
+try:
+    import boto3
+    import json
+    from decimal import Decimal
+    BOTO3_AVAILABLE = True
+except ImportError:
+    BOTO3_AVAILABLE = False
 
 # Page configuration
 st.set_page_config(
@@ -123,11 +129,34 @@ st.markdown("""
 st.markdown('<h1 class="main-header">💰 Enterprise SQL AlwaysOn Scaling Planner with Cost Analysis</h1>', unsafe_allow_html=True)
 st.markdown('<div class="enterprise-badge">ENTERPRISE GRADE • REAL-TIME AWS PRICING • MICROSOFT LICENSING • TCO ANALYSIS • ITIL 4 ALIGNED • GOVERNANCE READY</div>', unsafe_allow_html=True)
 
+# Show AWS integration status
+if not BOTO3_AVAILABLE:
+    st.info("💡 AWS real-time pricing unavailable (boto3 not installed). Using fallback pricing data. To enable real-time pricing, install boto3: `pip install boto3`")
+
 # AWS Pricing API Integration
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_aws_pricing():
-    """Fetch real-time AWS pricing using Pricing API"""
+    """Fetch real-time AWS pricing using Pricing API or return fallback data"""
+    
+    # Return fallback data if boto3 is not available
+    if not BOTO3_AVAILABLE:
+        return {
+            'ec2': {
+                'm5.xlarge': 0.768, 'm5.2xlarge': 1.536, 'm5.4xlarge': 3.072, 'm5.8xlarge': 6.144,
+                'm5.12xlarge': 9.216, 'm5.16xlarge': 12.288, 'r5.xlarge': 1.008, 'r5.2xlarge': 2.016,
+                'r5.4xlarge': 4.032, 'r5.8xlarge': 8.064, 'r5.12xlarge': 12.096, 'r5.16xlarge': 16.128
+            },
+            'ebs': {'gp3': 0.08, 'gp2': 0.10, 'io2': 0.125, 'io1': 0.125},
+            'ssm': {'patch_manager': 0.00972},
+            'last_updated': 'Fallback Data (boto3 not available)'
+        }
+    
     try:
+        # Check if AWS secrets are available
+        if "aws" not in st.secrets:
+            st.info("AWS credentials not configured. Using fallback pricing. Add AWS credentials to secrets.toml for real-time pricing.")
+            raise Exception("AWS secrets not configured")
+            
         # Initialize AWS client using Streamlit secrets
         session = boto3.Session(
             aws_access_key_id=st.secrets["aws"]["access_key_id"],
@@ -175,8 +204,7 @@ def get_aws_pricing():
         }
         
     except Exception as e:
-        st.warning(f"Unable to fetch real-time AWS pricing: {str(e)}. Using fallback pricing.")
-        # Fallback pricing if API call fails
+        # Fallback pricing if API call fails or credentials not available
         return {
             'ec2': {
                 'm5.xlarge': 0.768, 'm5.2xlarge': 1.536, 'm5.4xlarge': 3.072, 'm5.8xlarge': 6.144,
@@ -1386,21 +1414,40 @@ else:
 
 # Configuration note
 st.markdown("---")
-st.markdown("""
-### 🔧 AWS Configuration Required
+st.markdown(f"""
+### 🔧 Configuration & Setup
 
-To enable real-time pricing, add the following to your Streamlit secrets:
+**Current Status:**
+- **AWS Real-time Pricing:** {'✅ Available' if BOTO3_AVAILABLE else '❌ Unavailable (boto3 not installed)'}
+- **Pricing Data Source:** {pricing_data['last_updated']}
 
-```toml
-[aws]
-access_key_id = "your_aws_access_key"
-secret_access_key = "your_aws_secret_key"
-region = "us-east-1"
-```
+#### Option 1: Enable Real-Time AWS Pricing (Recommended)
 
-**Required AWS Permissions:**
-- `pricing:GetProducts` (for real-time pricing)
-- `pricing:DescribeServices` (for service information)
+1. **Install boto3:** 
+   ```bash
+   pip install boto3
+   ```
+
+2. **Add AWS credentials to Streamlit secrets:**
+   ```toml
+   [aws]
+   access_key_id = "your_aws_access_key"
+   secret_access_key = "your_aws_secret_key"
+   region = "us-east-1"
+   ```
+
+3. **Required AWS Permissions:**
+   - `pricing:GetProducts` (for real-time pricing)
+   - `pricing:DescribeServices` (for service information)
+
+#### Option 2: Use Fallback Pricing (Current Setup)
+The application works with representative pricing data when AWS integration is unavailable. Cost calculations remain accurate for planning purposes, though prices may not reflect current AWS rates.
+
+#### Additional Dependencies for Full Features:
+- `boto3` - AWS real-time pricing
+- `plotly` - Interactive visualizations  
+- `pandas` - Data analysis
+- `numpy` - Numerical calculations
 """)
 
 # Footer
