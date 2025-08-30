@@ -1489,29 +1489,30 @@ with st.expander("Workforce Requirements Calculations", expanded=False):
     """)
     
     if effective_automation < metrics['automation_maturity']:
-        st.warning(f"Automation maturity capped at {st.session_state.config_params['max_automation_maturity']}% due to enterprise constraints")with st.expander("Total Cost of Ownership Formula", expanded=False):
+        st.warning(f"Automation maturity capped at {st.session_state.config_params['max_automation_maturity']}% due to enterprise constraints")
+
+with st.expander("Total Cost of Ownership Formula", expanded=False):
     st.markdown(f"""
-    **TCO Calculation Summary:**
+    **Infrastructure TCO + Workforce FTE Requirements:**
     
     **Infrastructure Costs** = EC2 + EBS + SSM + Data Transfer
     - Static costs based on cluster/instance count
     - Not affected by automation (infrastructure needed regardless)
     - **{timeframe}-Month Total**: ${target_tco['infrastructure']['total_monthly'] * timeframe:,.0f}
     
-    **Workforce Costs** = (Base Staff × Support Multiplier × Automation Multiplier) × (Salary + Benefits)
-    - Reduced by automation maturity
+    **Workforce Requirements** = (Base FTE × Support Multiplier × Automation Multiplier)
+    - Reduced by automation maturity with realistic constraints
     - Affected by 24x7 support requirements
-    - **{timeframe}-Month Total**: ${target_tco['workforce']['annual_cost'] * (timeframe / 12):,.0f}
-    
-    **Total Cost of Ownership** = Infrastructure + Workforce
-    **Grand Total**: ${target_tco['total_tco']:,.0f}
+    - **Total Required**: {target_tco['workforce_requirements']['total_fte']} FTE
     
     **Cost Distribution:**
-    - Infrastructure: {(target_tco['infrastructure']['total_monthly'] * timeframe / target_tco['total_tco'] * 100):.1f}%
-    - Workforce: {(target_tco['workforce']['annual_cost'] * (timeframe / 12) / target_tco['total_tco'] * 100):.1f}%
+    - Infrastructure: ${target_tco['total_infrastructure_cost']:,.0f} ({timeframe} months)
+    - Workforce: {target_tco['workforce_requirements']['total_fte']} FTE positions required
+    
+    **Key Insight**: Infrastructure costs remain constant while workforce requirements are optimized through automation
     """)
 
-# TCO Breakdown Chart
+# Infrastructure Cost Breakdown Chart
 fig_tco = go.Figure(data=[
     go.Bar(
         name='Cost Components',
@@ -1533,30 +1534,31 @@ fig_tco.update_layout(
 
 st.plotly_chart(fig_tco, use_container_width=True)
 
-# Workforce vs Infrastructure Cost Analysis
-st.markdown("### Workforce vs Infrastructure Cost Breakdown")
-
-workforce_pct = (target_tco['tco_breakdown']['Workforce'] / target_tco['total_tco']) * 100
-infrastructure_pct = 100 - workforce_pct
+# Workforce FTE Impact Analysis
+st.markdown("### Workforce FTE Requirements Analysis")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric("Workforce Cost %", f"{workforce_pct:.1f}%")
-    st.metric("Infrastructure Cost %", f"{infrastructure_pct:.1f}%")
+    st.metric("Current Required FTE", f"{current_tco['workforce_requirements']['total_fte']}")
+    st.metric("Target Required FTE", f"{target_tco['workforce_requirements']['total_fte']}")
 
 with col2:
-    st.metric("Annual Workforce Cost", f"${target_tco['workforce']['annual_cost']:,.0f}")
-    infrastructure_annual = (target_tco['infrastructure']['total_monthly'] * 12)
-    st.metric("Annual Infrastructure Cost", f"${infrastructure_annual:,.0f}")
+    baseline_fte = baseline_tco['workforce_requirements']['total_fte']
+    fte_reduction = baseline_fte - target_tco['workforce_requirements']['total_fte']
+    st.metric("Baseline FTE (No Automation)", f"{baseline_fte}")
+    st.metric("FTE Reduction through Automation", f"{fte_reduction}")
 
 with col3:
-    if workforce_pct > 60:
-        st.warning("Workforce costs dominate - automation opportunity")
-    elif workforce_pct > 40:
-        st.info("Balanced cost structure")
+    fte_reduction_pct = (fte_reduction / baseline_fte * 100) if baseline_fte > 0 else 0
+    st.metric("FTE Reduction Percentage", f"{fte_reduction_pct:.1f}%")
+    
+    if fte_reduction_pct > 25:
+        st.success("Significant workforce optimization achieved")
+    elif fte_reduction_pct > 10:
+        st.info("Moderate workforce optimization")
     else:
-        st.success("Infrastructure-dominated costs - typical for mature automation")
+        st.warning("Limited workforce optimization - consider additional automation")
 
 # SQL Server Licensing Analysis (AWS License-Included Model)
 st.markdown("### SQL Server License-Included Analysis")
@@ -1589,26 +1591,30 @@ with col3:
     st.caption(f"**Pricing Model:** {aws_licensing_info['notes']}")
 
 # ROI Analysis (Updated with workforce focus)
-st.markdown("### Return on Investment Analysis")
+st.markdown("### Workforce Optimization Analysis")
 
 col1, col2, col3 = st.columns(3)
 
+baseline_fte = baseline_tco['workforce_requirements']['total_fte']
+target_fte = target_tco['workforce_requirements']['total_fte']
+fte_savings = baseline_fte - target_fte
+
 with col1:
-    st.metric("Total Workforce Savings", f"${workforce_savings:,.0f}")
+    st.metric("Total FTE Reduction", f"{fte_savings}")
     st.metric("Automation Maturity", f"{metrics['automation_maturity']:.0f}%")
     st.caption(f"Potential workforce reduction: {metrics['workforce_reduction_potential']:.1f}%")
 
 with col2:
-    if workforce_savings > 0:
-        roi_percentage = (workforce_savings / target_tco['total_tco'] * 100)
-        st.metric("Workforce ROI", f"{roi_percentage:.1f}%")
+    if fte_savings > 0:
+        reduction_percentage = (fte_savings / baseline_fte * 100)
+        st.metric("Workforce Reduction", f"{reduction_percentage:.1f}%")
         
-        annual_savings = workforce_savings / (timeframe / 12)
-        st.metric("Annual Workforce Savings", f"${annual_savings:,.0f}")
+        annual_infrastructure = target_tco['infrastructure']['total_monthly'] * 12
+        st.metric("Annual Infrastructure Cost", f"${annual_infrastructure:,.0f}")
 
 with col3:
-    workforce_reduction_pct = ((sum(baseline_tco['skills_required'].values()) - sum(target_tco['skills_required'].values())) / sum(baseline_tco['skills_required'].values()) * 100) if sum(baseline_tco['skills_required'].values()) > 0 else 0
-    st.metric("Workforce Reduction", f"{workforce_reduction_pct:.0f}%")
+    workforce_reduction_pct = (fte_savings / baseline_fte * 100) if baseline_fte > 0 else 0
+    st.metric("Optimization Efficiency", f"{workforce_reduction_pct:.0f}%")
     
     if workforce_reduction_pct > 25:
         st.success("Significant workforce optimization achieved")
@@ -1627,7 +1633,8 @@ with col1:
     st.write(f"**Automation Maturity:** {metrics['automation_maturity']:.0f}% ({'Advanced' if metrics['automation_maturity'] >= 70 else 'Developing' if metrics['automation_maturity'] >= 40 else 'Initial'})")
     st.write(f"**ITIL Practice Coverage:** {metrics['itil_maturity']:.0f}% ({'Mature' if metrics['itil_maturity'] >= 70 else 'Developing'})")
     st.write(f"**Governance Framework:** {governance_maturity:.0f}% ({'Established' if governance_maturity >= 70 else 'Needs Development'})")
-    st.write(f"**Total TCO:** ${target_tco['total_tco']:,.0f} over {timeframe} months")
+    st.write(f"**Infrastructure Cost:** ${target_tco['total_infrastructure_cost']:,.0f} over {timeframe} months")
+    st.write(f"**Workforce Requirements:** {target_tco['workforce_requirements']['total_fte']} FTE")
 
 with col2:
     st.markdown("### Strategic Recommendations")
@@ -1646,8 +1653,8 @@ with col2:
     if governance_maturity < 70:
         recommendations.append("Implement enterprise governance framework")
     
-    if workforce_pct > 60:
-        recommendations.append("Focus on workforce automation - labor costs dominate TCO")
+    if target_tco['workforce_requirements']['total_fte'] > 20:
+        recommendations.append("Focus on workforce automation - significant FTE requirements identified")
     
     if not recommendations:
         recommendations.append("Continue execution of current strategy")
@@ -1676,15 +1683,16 @@ if total_hires_needed > 5:
     action_items.append("Establish structured onboarding and mentorship program")
 
 action_items.append("Evaluate Reserved Instance pricing for long-term cost optimization")
-action_items.append("Establish monthly cost monitoring and optimization reviews")
-action_items.append("Configure dynamic parameters based on organizational standards")
+action_items.append("Establish monthly infrastructure cost monitoring")
+action_items.append("Configure workforce ratios based on organizational standards")
+action_items.append("Validate FTE requirements with current operational capacity")
 
 for i, item in enumerate(action_items, 1):
     st.write(f"{i}. {item}")
 
 # Certification Status
 st.markdown("---")
-st.markdown("### Enterprise Certification Status")
+st.markdown("### Enterprise Readiness Assessment")
 
 if (metrics['automation_maturity'] >= 70 and 
     metrics['itil_maturity'] >= 70 and 
@@ -1695,34 +1703,36 @@ elif (metrics['automation_maturity'] >= 50):
 else:
     st.error("**DEVELOPMENT REQUIRED** - Significant gaps exist, not yet enterprise-grade")
 
-# Configuration note
+# Final validation note
 st.markdown("---")
 st.markdown(f"""
-### Configuration & Setup
+### Estimation Tool Summary
 
-**Current Status:**
-- **AWS Real-time Pricing:** {'Available' if BOTO3_AVAILABLE else 'Unavailable (boto3 not installed)'}
-- **Pricing Data Source:** {pricing_data['last_updated']}
-- **Dynamic Parameters:** All workforce ratios, salaries, and benchmarks are configurable
+**Infrastructure Analysis:**
+- **Total Infrastructure Cost**: ${target_tco['total_infrastructure_cost']:,.0f} ({timeframe} months)
+- **Monthly Infrastructure Cost**: ${target_tco['infrastructure']['total_monthly']:,.0f}
+- **Instance Count**: {target_tco['infrastructure']['total_instances']} EC2 instances
 
-#### Key Features:
-1. **Workforce-Centric Cost Model:** Automation primarily reduces labor costs, not infrastructure costs
-2. **Dynamic Configuration:** No hardcoded financial values - all parameters configurable via sidebar
-3. **Industry Benchmarks:** Customizable benchmark comparisons
-4. **Real-time Calculations:** All metrics update dynamically as parameters change
+**Workforce Requirements (FTE):**
+- **Total FTE Required**: {target_tco['workforce_requirements']['total_fte']} positions
+- **SQL Server DBAs**: {target_tco['workforce_requirements']['breakdown']['SQL Server DBA Expert']} FTE (ratio: 1 per {st.session_state.config_params['dba_ratio']} clusters)
+- **Infrastructure Engineers**: {target_tco['workforce_requirements']['breakdown']['Infrastructure Automation']} FTE (ratio: 1 per {st.session_state.config_params['automation_ratio']} clusters)
+- **ITIL Service Managers**: {target_tco['workforce_requirements']['breakdown']['ITIL Service Manager']} FTE (ratio: 1 per {st.session_state.config_params['itil_ratio']} clusters)
 
-#### To Enable Real-Time AWS Pricing:
-1. Install boto3: `pip install boto3`
-2. Add AWS credentials to Streamlit secrets
-3. Required permissions: `pricing:GetProducts`, `pricing:DescribeServices`
+**Automation Impact:**
+- **Current Automation Maturity**: {metrics['automation_maturity']:.0f}%
+- **Maximum Realistic Automation**: {st.session_state.config_params['max_automation_maturity']}%
+- **FTE Reduction through Automation**: {baseline_fte - target_tco['workforce_requirements']['total_fte']} positions ({(baseline_fte - target_tco['workforce_requirements']['total_fte'])/baseline_fte*100:.1f}% reduction)
 
-#### Dependencies:
-- `boto3` - AWS real-time pricing (optional)
-- `plotly` - Interactive visualizations
-- `pandas` - Data analysis
-- `numpy` - Numerical calculations
+**Practical Workforce Ratios Used:**
+- Ratios based on enterprise database operations experience
+- Account for realistic automation constraints (65% maximum)
+- Include 24x7 support multiplier when applicable
+- Factor in role-specific automation limitations (DBAs, ITIL managers have lower automation potential)
+
+This estimation tool provides infrastructure cost projections and workforce FTE requirements for strategic planning purposes. All workforce ratios are configurable based on organizational standards and automation maturity levels.
 """)
 
 # Footer
 st.markdown("---")
-st.markdown("*Enterprise SQL AlwaysOn AWS EC2 Scaling Planner v5.0 - Workforce-Centric TCO | Dynamic Parameters | Real-Time Pricing | Enterprise Governance*")
+st.markdown("*Enterprise SQL Server Scaling Platform v5.1 - FTE Estimation Tool | Realistic Automation Constraints | Dynamic Workforce Ratios | Infrastructure Cost Analysis*")
