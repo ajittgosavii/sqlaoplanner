@@ -7,7 +7,6 @@ import numpy as np
 from datetime import datetime, timedelta
 import math
 
-
 # Optional AWS integration - gracefully handle if boto3 not installed
 try:
     import boto3
@@ -293,7 +292,8 @@ def initialize_enterprise_state():
             'dba_ratio': 15,  # clusters per DBA
             'automation_ratio': 30,  # clusters per automation engineer
             'itil_ratio': 50,  # clusters per ITIL manager
-            'max_automation_reduction': 40,  # max workforce reduction from automation
+            'max_automation_maturity': 65,  # realistic max automation level
+            'max_workforce_reduction': 65,  # max workforce reduction at full automation
             'support_24x7_multiplier': 1.4,
             
             # Salary parameters
@@ -547,9 +547,12 @@ rto_minutes = st.sidebar.slider("Recovery Time Objective (minutes)", 15, 1440, 2
 # Support model
 support_24x7 = st.sidebar.checkbox("24x7 Global Support Coverage", value=False)
 
-# Skills requirements calculation with dynamic parameters
+# Skills requirements calculation with realistic automation constraints
 def calculate_skills_requirements(clusters, automation_level, support_24x7):
-    """Calculate required skills based on dynamic parameters"""
+    """Calculate required skills based on realistic enterprise constraints"""
+    
+    # Cap automation at realistic maximum (65%)
+    effective_automation = min(automation_level, st.session_state.config_params['max_automation_maturity'])
     
     base_requirements = {
         'SQL Server DBA Expert': max(1, math.ceil(clusters / st.session_state.config_params['dba_ratio'])),
@@ -557,19 +560,44 @@ def calculate_skills_requirements(clusters, automation_level, support_24x7):
         'ITIL Service Manager': max(1, math.ceil(clusters / st.session_state.config_params['itil_ratio'])),
     }
     
-    # Apply automation reduction (workforce-focused)
-    automation_multiplier = 1.0 - (automation_level / 100 * st.session_state.config_params['max_automation_reduction'] / 100)
+    # Realistic automation impact: linear reduction up to max (65% reduction at 65% automation)
+    automation_reduction_factor = (effective_automation / 100) * (st.session_state.config_params['max_workforce_reduction'] / 100)
+    workforce_multiplier = 1.0 - automation_reduction_factor
+    
+    # Support coverage multiplier
     support_multiplier = st.session_state.config_params['support_24x7_multiplier'] if support_24x7 else 1.0
     
     adjusted_requirements = {}
     for role, base_req in base_requirements.items():
-        if role in ['SQL Server DBA Expert', 'ITIL Service Manager']:
-            # These roles benefit less from automation
-            adjusted_req = math.ceil(base_req * support_multiplier * max(0.6, automation_multiplier))
-        else:
-            # Infrastructure automation roles benefit more from automation
-            adjusted_req = math.ceil(base_req * support_multiplier * max(0.4, automation_multiplier))
         
+        # Account for role-specific automation limitations
+        if role == 'SQL Server DBA Expert':
+            # DBAs have automation constraints due to:
+            # - Legacy systems without APIs (35% of operations)
+            # - Complex troubleshooting requiring human judgment
+            # - Critical decision-making that can't be automated
+            role_automation_cap = min(effective_automation, 60)  # DBAs cap at 60% automation
+            role_reduction = (role_automation_cap / 100) * 0.50  # Max 50% reduction for DBAs
+            role_multiplier = 1.0 - role_reduction
+            
+        elif role == 'Infrastructure Automation':
+            # Automation engineers benefit most from their own tools
+            # But still need human oversight for complex scenarios
+            role_automation_cap = effective_automation
+            role_reduction = (role_automation_cap / 100) * 0.70  # Up to 70% reduction
+            role_multiplier = 1.0 - role_reduction
+            
+        elif role == 'ITIL Service Manager':
+            # Service management has some automation potential but requires human coordination
+            role_automation_cap = min(effective_automation, 50)  # ITIL caps at 50% automation
+            role_reduction = (role_automation_cap / 100) * 0.40  # Max 40% reduction for ITIL
+            role_multiplier = 1.0 - role_reduction
+        
+        else:
+            role_multiplier = workforce_multiplier
+        
+        # Apply both automation and support multipliers
+        adjusted_req = math.ceil(base_req * support_multiplier * role_multiplier)
         adjusted_requirements[role] = max(1, adjusted_req) if base_req > 0 else 0
     
     return adjusted_requirements
@@ -935,20 +963,35 @@ with col1:
     
     with st.expander("Methodology: Resource Requirements Calculation"):
         st.markdown(f"""
-        **Calculation Framework (Workforce-Centric with Dynamic Parameters):**
+        **Corrected Workforce-Centric Calculation Framework:**
         
         1. **Base Resource Requirements by Role:**
            - SQL Server DBA Expert: 1 FTE per {st.session_state.config_params['dba_ratio']} infrastructure clusters
            - Infrastructure Automation: 1 FTE per {st.session_state.config_params['automation_ratio']} infrastructure clusters  
            - ITIL Service Manager: 1 FTE per {st.session_state.config_params['itil_ratio']} infrastructure clusters
         
-        2. **Automation Efficiency Factor:** Up to {st.session_state.config_params['max_automation_reduction']}% reduction in staffing requirements with mature automation
+        2. **Realistic Automation Constraints:**
+           - **Maximum Automation Maturity**: {st.session_state.config_params['max_automation_maturity']}% (not 85%)
+           - **Enterprise Reality**: 35% of operations lack APIs, require human judgment
+           - **Legacy System Constraints**: Cannot fully automate without major re-architecture
+           
+        3. **Role-Specific Automation Limitations:**
+           - **DBA Roles**: Capped at 60% automation (max 50% workforce reduction)
+           - **Infrastructure**: Up to 70% workforce reduction possible
+           - **ITIL Managers**: Capped at 50% automation (max 40% workforce reduction)
         
-        3. **Service Coverage Multiplier:** {st.session_state.config_params['support_24x7_multiplier']}x increase for continuous operations (24x7) coverage
+        4. **Service Coverage Multiplier:** {st.session_state.config_params['support_24x7_multiplier']}x increase for continuous operations (24x7) coverage
         
-        4. **Role-Specific Adjustments:** Infrastructure automation roles benefit more from technology adoption than administrative and service management roles
+        5. **Key Correction from Previous Flawed Logic:**
+           - **Old Logic**: 85% automation → only 34% workforce reduction ❌
+           - **New Logic**: {st.session_state.config_params['max_automation_maturity']}% automation → up to {st.session_state.config_params['max_workforce_reduction']}% workforce reduction ✅
+           - **Reality Check**: Accounts for enterprise constraints and legacy limitations
         
-        5. **Dynamic Configuration:** All ratios and multipliers are configurable via sidebar parameters
+        **Why This Model is More Realistic:**
+        - Recognizes automation plateau due to legacy constraints
+        - Accounts for human judgment requirements in complex scenarios  
+        - Reflects actual enterprise database operation limitations
+        - Avoids overly optimistic automation assumptions
         """)
 
 with col2:
@@ -979,11 +1022,13 @@ st.markdown("---")
 st.markdown('<div class="subsection-header">Strategic Resource Planning Forecast</div>', unsafe_allow_html=True)
 
 def calculate_monthly_forecast():
-    """Calculate month-by-month scaling forecast from current to target clusters"""
+    """Calculate month-by-month scaling forecast with realistic automation constraints"""
     
     cluster_growth_per_month = (target_clusters - current_clusters) / timeframe
     automation_start = metrics['automation_maturity']
-    automation_target = min(85, automation_start + 40)
+    
+    # Cap automation target at realistic maximum (65%)
+    automation_target = min(st.session_state.config_params['max_automation_maturity'], automation_start + 40)
     automation_growth_per_month = (automation_target - automation_start) / timeframe
     
     forecast_data = []
@@ -991,6 +1036,9 @@ def calculate_monthly_forecast():
     for month in range(timeframe + 1):
         month_clusters = current_clusters + (cluster_growth_per_month * month)
         month_automation = automation_start + (automation_growth_per_month * month)
+        
+        # Ensure automation doesn't exceed realistic maximum
+        month_automation = min(month_automation, st.session_state.config_params['max_automation_maturity'])
         
         month_required_skills = calculate_skills_requirements(
             int(month_clusters), 
@@ -1003,6 +1051,7 @@ def calculate_monthly_forecast():
         if target_month_for_hiring <= timeframe:
             target_clusters_for_hiring = current_clusters + (cluster_growth_per_month * target_month_for_hiring)
             target_automation_for_hiring = automation_start + (automation_growth_per_month * target_month_for_hiring)
+            target_automation_for_hiring = min(target_automation_for_hiring, st.session_state.config_params['max_automation_maturity'])
             target_skills_for_hiring = calculate_skills_requirements(
                 int(target_clusters_for_hiring), 
                 target_automation_for_hiring, 
@@ -1320,6 +1369,172 @@ st.metric("Governance Maturity Level", f"{governance_maturity:.0f}%")
 # Cost Analysis Sections
 st.markdown("---")
 st.markdown('<div class="section-header">Comprehensive Cost Analysis</div>', unsafe_allow_html=True)
+
+# Detailed Cost Calculation Breakdown
+st.markdown("### Detailed Cost Calculation Methodology")
+
+with st.expander("Infrastructure Cost Calculations", expanded=False):
+    st.markdown("#### Infrastructure Components Breakdown")
+    
+    # Get current pricing for display
+    windows_rate = pricing_data['ec2_windows'].get(instance_type, 0.384)
+    edition_key_map = {"Web": "ec2_sql_web", "Standard": "ec2_sql_standard", "Enterprise": "ec2_sql_enterprise"}
+    edition_key = edition_key_map.get(sql_edition, "ec2_sql_standard")
+    sql_rate = pricing_data[edition_key].get(instance_type, windows_rate * 2)
+    licensing_rate = sql_rate - windows_rate
+    
+    total_instances = target_clusters * ec2_per_cluster
+    ebs_rate_per_gb = pricing_data['ebs'][ebs_volume_type]
+    storage_gb = current_storage_tb * 1024
+    
+    st.markdown(f"""
+    **EC2 Compute & SQL Licensing:**
+    - Instance Type: {instance_type}
+    - SQL Server Edition: {sql_edition}
+    - Windows Base Rate: ${windows_rate:.3f}/hour
+    - SQL Server Rate: ${sql_rate:.3f}/hour
+    - SQL Licensing Component: ${licensing_rate:.3f}/hour
+    - Total Instances: {target_clusters} clusters × {ec2_per_cluster} instances = {total_instances} instances
+    - Monthly Compute Cost: ${total_instances} × ${sql_rate:.3f} × 24 × 30 = ${total_instances * sql_rate * 24 * 30:,.0f}
+    - **{timeframe}-Month Total**: ${total_instances * sql_rate * 24 * 30 * timeframe:,.0f}
+    
+    **EBS Storage:**
+    - Volume Type: {ebs_volume_type.upper()}
+    - Rate: ${ebs_rate_per_gb}/GB/month
+    - Storage per Instance: {current_storage_tb} TB = {storage_gb:,.0f} GB
+    - Monthly Storage Cost: {total_instances} instances × {storage_gb:,.0f} GB × ${ebs_rate_per_gb} = ${total_instances * storage_gb * ebs_rate_per_gb:,.0f}
+    - **{timeframe}-Month Total**: ${total_instances * storage_gb * ebs_rate_per_gb * timeframe:,.0f}
+    """)
+    
+    if enable_ssm_patching:
+        ssm_rate = pricing_data['ssm']['patch_manager']
+        monthly_ssm = ssm_rate * 24 * 30 * total_instances
+        st.markdown(f"""
+        **Systems Manager Patching:**
+        - Rate: ${ssm_rate:.5f}/instance/hour
+        - Monthly Cost: {total_instances} instances × ${ssm_rate:.5f} × 24 × 30 = ${monthly_ssm:,.0f}
+        - **{timeframe}-Month Total**: ${monthly_ssm * timeframe:,.0f}
+        """)
+    
+    data_transfer_monthly = target_clusters * (25 if deployment_type == "AlwaysOn Cluster" else 10)
+    st.markdown(f"""
+    **Data Transfer (estimated):**
+    - Rate: ${25 if deployment_type == "AlwaysOn Cluster" else 10}/cluster/month
+    - Monthly Cost: {target_clusters} clusters × ${25 if deployment_type == "AlwaysOn Cluster" else 10} = ${data_transfer_monthly:,.0f}
+    - **{timeframe}-Month Total**: ${data_transfer_monthly * timeframe:,.0f}
+    
+    **Infrastructure Grand Total**: ${target_tco['infrastructure']['total_monthly'] * timeframe:,.0f}
+    """)
+
+with st.expander("Workforce Cost Calculations", expanded=False):
+    st.markdown("#### Workforce Components Breakdown (Realistic Automation Constraints)")
+    
+    # Calculate step by step with new logic
+    base_dba = max(1, math.ceil(target_clusters / st.session_state.config_params['dba_ratio']))
+    base_automation = max(1, math.ceil(target_clusters / st.session_state.config_params['automation_ratio']))
+    base_itil = max(1, math.ceil(target_clusters / st.session_state.config_params['itil_ratio']))
+    
+    # Apply realistic automation constraints
+    effective_automation = min(metrics['automation_maturity'], st.session_state.config_params['max_automation_maturity'])
+    support_multiplier = st.session_state.config_params['support_24x7_multiplier'] if support_24x7 else 1.0
+    
+    # Role-specific automation calculations
+    dba_automation_cap = min(effective_automation, 60)
+    dba_reduction = (dba_automation_cap / 100) * 0.50
+    dba_multiplier = 1.0 - dba_reduction
+    
+    automation_reduction = (effective_automation / 100) * 0.70
+    automation_multiplier = 1.0 - automation_reduction
+    
+    itil_automation_cap = min(effective_automation, 50)
+    itil_reduction = (itil_automation_cap / 100) * 0.40
+    itil_multiplier = 1.0 - itil_reduction
+    
+    final_dba = math.ceil(base_dba * support_multiplier * dba_multiplier)
+    final_automation = math.ceil(base_automation * support_multiplier * automation_multiplier)
+    final_itil = math.ceil(base_itil * support_multiplier * itil_multiplier)
+    
+    # Cost calculations
+    dba_annual_cost = final_dba * st.session_state.config_params['dba_salary'] * (1 + st.session_state.config_params['benefits_percentage'] / 100)
+    automation_annual_cost = final_automation * st.session_state.config_params['automation_salary'] * (1 + st.session_state.config_params['benefits_percentage'] / 100)
+    itil_annual_cost = final_itil * st.session_state.config_params['itil_salary'] * (1 + st.session_state.config_params['benefits_percentage'] / 100)
+    
+    st.markdown(f"""
+    **Base Staffing Requirements:**
+    - SQL Server DBA Expert: {target_clusters} clusters ÷ {st.session_state.config_params['dba_ratio']} = {base_dba} FTE
+    - Infrastructure Automation: {target_clusters} clusters ÷ {st.session_state.config_params['automation_ratio']} = {base_automation} FTE
+    - ITIL Service Manager: {target_clusters} clusters ÷ {st.session_state.config_params['itil_ratio']} = {base_itil} FTE
+    
+    **Realistic Automation Constraints:**
+    - Current Automation Maturity: {metrics['automation_maturity']:.1f}%
+    - Effective Automation (capped at {st.session_state.config_params['max_automation_maturity']}%): {effective_automation:.1f}%
+    - Support Coverage: {'24x7' if support_24x7 else 'Business Hours'} (multiplier: {support_multiplier:.1f}x)
+    
+    **Role-Specific Automation Impact:**
+    - **DBA**: Capped at 60% automation (legacy systems, human judgment needed)
+      - Automation impact: {dba_automation_cap:.1f}% × 50% max reduction = {dba_reduction*100:.1f}% reduction
+      - Workforce multiplier: {dba_multiplier:.3f}
+    - **Infrastructure Automation**: Up to 70% reduction possible
+      - Automation impact: {effective_automation:.1f}% × 70% max reduction = {automation_reduction*100:.1f}% reduction  
+      - Workforce multiplier: {automation_multiplier:.3f}
+    - **ITIL Service Manager**: Capped at 50% automation (coordination requires humans)
+      - Automation impact: {itil_automation_cap:.1f}% × 40% max reduction = {itil_reduction*100:.1f}% reduction
+      - Workforce multiplier: {itil_multiplier:.3f}
+    
+    **Adjusted Staffing (Accounting for Constraints):**
+    - SQL Server DBA Expert: {base_dba} × {support_multiplier:.1f} × {dba_multiplier:.3f} = {final_dba} FTE
+    - Infrastructure Automation: {base_automation} × {support_multiplier:.1f} × {automation_multiplier:.3f} = {final_automation} FTE
+    - ITIL Service Manager: {base_itil} × {support_multiplier:.1f} × {itil_multiplier:.3f} = {final_itil} FTE
+    
+    **Annual Cost Calculations (including {st.session_state.config_params['benefits_percentage']}% benefits):**
+    - SQL Server DBA: {final_dba} × ${st.session_state.config_params['dba_salary']:,} × {1 + st.session_state.config_params['benefits_percentage'] / 100:.2f} = ${dba_annual_cost:,.0f}
+    - Infrastructure Automation: {final_automation} × ${st.session_state.config_params['automation_salary']:,} × {1 + st.session_state.config_params['benefits_percentage'] / 100:.2f} = ${automation_annual_cost:,.0f}
+    - ITIL Service Manager: {final_itil} × ${st.session_state.config_params['itil_salary']:,} × {1 + st.session_state.config_params['benefits_percentage'] / 100:.2f} = ${itil_annual_cost:,.0f}
+    
+    **Enterprise Reality Check:**
+    - 35% of operations lack APIs and require manual intervention
+    - Complex troubleshooting needs human expertise and judgment
+    - Critical decisions cannot be fully automated for risk management
+    - Change management and stakeholder communication require human coordination
+    
+    **Total Annual Workforce Cost**: ${dba_annual_cost + automation_annual_cost + itil_annual_cost:,.0f}
+    **{timeframe}-Month Workforce Cost**: ${(dba_annual_cost + automation_annual_cost + itil_annual_cost) * (timeframe / 12):,.0f}
+    """)
+
+    # Compare with unrealistic automation assumptions
+    st.markdown("---")
+    st.markdown("**❌ Why 85% Automation is Unrealistic:**")
+    st.markdown("""
+    - **Legacy Constraint**: 35% of database operations lack modern APIs
+    - **Human Judgment**: Complex performance issues require expert analysis
+    - **Risk Management**: Critical changes need human approval and oversight
+    - **Organizational Change**: Moving from 30% to 85% automation requires years of transformation
+    """)
+    
+    if effective_automation < metrics['automation_maturity']:
+        st.warning(f"Automation maturity capped at {st.session_state.config_params['max_automation_maturity']}% due to enterprise constraints")
+
+with st.expander("Total Cost of Ownership Formula", expanded=False):
+    st.markdown(f"""
+    **TCO Calculation Summary:**
+    
+    **Infrastructure Costs** = EC2 + EBS + SSM + Data Transfer
+    - Static costs based on cluster/instance count
+    - Not affected by automation (infrastructure needed regardless)
+    - **{timeframe}-Month Total**: ${target_tco['infrastructure']['total_monthly'] * timeframe:,.0f}
+    
+    **Workforce Costs** = (Base Staff × Support Multiplier × Automation Multiplier) × (Salary + Benefits)
+    - Reduced by automation maturity
+    - Affected by 24x7 support requirements
+    - **{timeframe}-Month Total**: ${target_tco['workforce']['annual_cost'] * (timeframe / 12):,.0f}
+    
+    **Total Cost of Ownership** = Infrastructure + Workforce
+    **Grand Total**: ${target_tco['total_tco']:,.0f}
+    
+    **Cost Distribution:**
+    - Infrastructure: {(target_tco['infrastructure']['total_monthly'] * timeframe / target_tco['total_tco'] * 100):.1f}%
+    - Workforce: {(target_tco['workforce']['annual_cost'] * (timeframe / 12) / target_tco['total_tco'] * 100):.1f}%
+    """)
 
 # TCO Breakdown Chart
 fig_tco = go.Figure(data=[
