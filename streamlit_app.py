@@ -1095,7 +1095,7 @@ for data in forecast_data:
         monthly_breakdown.append(month_row)
 
 breakdown_df = pd.DataFrame(monthly_breakdown)
-    st.dataframe(breakdown_df, width='stretch')
+st.dataframe(breakdown_df, width='stretch')
 
 # Hiring recommendations
 st.markdown('<div class="subsection-header">Strategic Hiring Recommendations</div>', unsafe_allow_html=True)
