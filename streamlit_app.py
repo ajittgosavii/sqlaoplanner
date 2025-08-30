@@ -7,6 +7,41 @@ import numpy as np
 from datetime import datetime, timedelta
 import math
 
+# Debug section - add temporarily
+st.write("Debug Info:")
+try:
+    import boto3
+    st.write("✅ boto3 imported successfully")
+    BOTO3_AVAILABLE = True
+except ImportError as e:
+    st.write(f"❌ boto3 import failed: {e}")
+    BOTO3_AVAILABLE = False
+
+# Add this debug code
+if "aws" in st.secrets:
+    st.write("✅ AWS secrets found")
+    st.write(f"Region: {st.secrets['aws'].get('region', 'not set')}")
+    # Don't display actual credentials for security
+else:
+    st.write("❌ AWS secrets not found in st.secrets")
+
+# Add this debug code
+if BOTO3_AVAILABLE and "aws" in st.secrets:
+    try:
+        session = boto3.Session(
+            aws_access_key_id=st.secrets["aws"]["access_key_id"],
+            aws_secret_access_key=st.secrets["aws"]["secret_access_key"],
+            region_name=st.secrets["aws"].get("region", "us-east-1")
+        )
+        pricing_client = session.client('pricing', region_name='us-east-1')
+        
+        # Simple test call
+        response = pricing_client.describe_services(MaxResults=1)
+        st.write("✅ AWS Pricing API connection successful")
+        
+    except Exception as e:
+        st.write(f"❌ AWS Pricing API connection failed: {e}")
+
 # Optional AWS integration - gracefully handle if boto3 not installed
 try:
     import boto3
