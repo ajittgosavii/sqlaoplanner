@@ -551,6 +551,12 @@ support_24x7 = st.sidebar.checkbox("24x7 Global Support Coverage", value=False)
 def calculate_skills_requirements(clusters, automation_level, support_24x7):
     """Calculate required skills based on realistic enterprise constraints"""
     
+    # Ensure config_params has required keys with defaults
+    if 'max_automation_maturity' not in st.session_state.config_params:
+        st.session_state.config_params['max_automation_maturity'] = 65
+    if 'max_workforce_reduction' not in st.session_state.config_params:
+        st.session_state.config_params['max_workforce_reduction'] = 65
+    
     # Cap automation at realistic maximum (65%)
     effective_automation = min(automation_level, st.session_state.config_params['max_automation_maturity'])
     
@@ -1023,6 +1029,10 @@ st.markdown('<div class="subsection-header">Strategic Resource Planning Forecast
 
 def calculate_monthly_forecast():
     """Calculate month-by-month scaling forecast with realistic automation constraints"""
+    
+    # Ensure config_params has required keys with defaults
+    if 'max_automation_maturity' not in st.session_state.config_params:
+        st.session_state.config_params['max_automation_maturity'] = 65
     
     cluster_growth_per_month = (target_clusters - current_clusters) / timeframe
     automation_start = metrics['automation_maturity']
