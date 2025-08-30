@@ -288,19 +288,13 @@ def initialize_enterprise_state():
     # Dynamic Configuration Parameters
     if 'config_params' not in st.session_state:
         st.session_state.config_params = {
-            # Workforce parameters
-            'dba_ratio': 15,  # clusters per DBA
-            'automation_ratio': 30,  # clusters per automation engineer
-            'itil_ratio': 50,  # clusters per ITIL manager
+            # Workforce parameters (practical enterprise ratios)
+            'dba_ratio': 25,  # clusters per DBA (realistic for enterprise)
+            'automation_ratio': 35,  # clusters per automation engineer
+            'itil_ratio': 60,  # clusters per ITIL manager
             'max_automation_maturity': 65,  # realistic max automation level
             'max_workforce_reduction': 65,  # max workforce reduction at full automation
             'support_24x7_multiplier': 1.4,
-            
-            # Salary parameters
-            'dba_salary': 120000,
-            'automation_salary': 140000,
-            'itil_salary': 100000,
-            'benefits_percentage': 35,
             
             # Benchmarks
             'benchmark_availability_avg': 99.5,
@@ -681,61 +675,43 @@ def calculate_infrastructure_costs(clusters, instance_type, instances_per_cluste
         'total_instances': total_instances
     }
 
-def calculate_workforce_costs(skills_requirements):
-    """Calculate workforce costs based on dynamic salary parameters"""
+def calculate_workforce_requirements(skills_requirements):
+    """Calculate workforce requirements in FTE (Full Time Equivalent) counts"""
     
-    annual_salaries = {
-        'SQL Server DBA Expert': st.session_state.config_params['dba_salary'],
-        'Infrastructure Automation': st.session_state.config_params['automation_salary'],
-        'ITIL Service Manager': st.session_state.config_params['itil_salary']
-    }
-    
-    annual_workforce_cost = 0
-    breakdown = {}
-    for role, count in skills_requirements.items():
-        base_salary = annual_salaries.get(role, 100000)
-        total_cost = base_salary * (1 + st.session_state.config_params['benefits_percentage'] / 100) * count
-        annual_workforce_cost += total_cost
-        breakdown[role] = total_cost
-    
-    monthly_workforce_cost = annual_workforce_cost / 12
+    total_fte = sum(skills_requirements.values())
     
     return {
-        'annual_cost': annual_workforce_cost,
-        'monthly_cost': monthly_workforce_cost,
-        'breakdown': breakdown
+        'total_fte': total_fte,
+        'breakdown': skills_requirements.copy()
     }
 
 def calculate_total_cost_of_ownership(clusters, automation_level, timeframe_months):
-    """Calculate comprehensive TCO with workforce focus"""
+    """Calculate infrastructure TCO and workforce FTE requirements"""
     
-    # Infrastructure costs (static based on cluster count)
+    # Infrastructure costs (infrastructure only - no workforce costs)
     infra_costs = calculate_infrastructure_costs(
         clusters, instance_type, ec2_per_cluster, current_storage_tb, 
         ebs_volume_type, enable_ssm_patching, sql_edition
     )
     
-    # Workforce costs (reduced by automation)
+    # Workforce requirements (FTE counts, not costs)
     skills_needed = calculate_skills_requirements(clusters, automation_level, support_24x7)
-    workforce_costs = calculate_workforce_costs(skills_needed)
+    workforce_requirements = calculate_workforce_requirements(skills_needed)
     
-    # Total monthly cost
-    monthly_total = infra_costs['total_monthly'] + workforce_costs['monthly_cost']
-    total_tco = monthly_total * timeframe_months
+    # Total infrastructure cost over timeframe
+    total_infrastructure_cost = infra_costs['total_monthly'] * timeframe_months
     
     return {
         'infrastructure': infra_costs,
-        'workforce': workforce_costs,
+        'workforce_requirements': workforce_requirements,
         'skills_required': skills_needed,
-        'monthly_total': monthly_total,
-        'total_tco': total_tco,
+        'total_infrastructure_cost': total_infrastructure_cost,
         'tco_breakdown': {
             'EC2 Compute': infra_costs['ec2_compute_monthly'] * timeframe_months,
             'SQL Licensing (AWS)': infra_costs['sql_licensing_monthly'] * timeframe_months,
             'EBS Storage': infra_costs['ebs_monthly'] * timeframe_months,
             'SSM Patching': infra_costs['ssm_monthly'] * timeframe_months,
             'Data Transfer': infra_costs['data_transfer_monthly'] * timeframe_months,
-            'Workforce': workforce_costs['annual_cost'] * (timeframe_months / 12)
         }
     }
 
@@ -845,27 +821,27 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown(f"""
     <div class="cost-summary">
-        <h3>Total Cost of Ownership Analysis</h3>
-        <h2>${target_tco['total_tco']:,.0f}</h2>
-        <p>{timeframe}-month projection | {target_clusters} {deployment_type.lower()}s</p>
-        <p>Infrastructure: ${target_tco['tco_breakdown']['EC2 Compute'] + target_tco['tco_breakdown']['SQL Licensing (AWS)'] + target_tco['tco_breakdown']['EBS Storage']:,.0f}</p>
-        <p>Workforce: ${target_tco['tco_breakdown']['Workforce']:,.0f}</p>
+        <h3>Infrastructure Cost Analysis</h3>
+        <h2>${target_tco['total_infrastructure_cost']:,.0f}</h2>
+        <p>{timeframe}-month infrastructure projection</p>
+        <p>{target_clusters} {deployment_type.lower()}s | {target_tco['infrastructure']['total_instances']} instances</p>
+        <p>Monthly Infrastructure: ${target_tco['infrastructure']['total_monthly']:,.0f}</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
-    # Calculate potential workforce savings
+    # Calculate workforce savings through automation
     baseline_automation = 0  # No automation scenario
     baseline_tco = calculate_total_cost_of_ownership(target_clusters, baseline_automation, timeframe)
-    workforce_savings = baseline_tco['tco_breakdown']['Workforce'] - target_tco['tco_breakdown']['Workforce']
+    fte_reduction = baseline_tco['workforce_requirements']['total_fte'] - target_tco['workforce_requirements']['total_fte']
     
     st.markdown(f"""
     <div class="savings-highlight">
-        <h3>Workforce Optimization Potential</h3>
-        <h2>${workforce_savings:,.0f}</h2>
-        <p>{metrics['workforce_reduction_potential']:.1f}% workforce reduction through automation</p>
-        <p>Baseline Workforce Cost: ${baseline_tco['tco_breakdown']['Workforce']:,.0f}</p>
-        <p>Optimized Workforce Cost: ${target_tco['tco_breakdown']['Workforce']:,.0f}</p>
+        <h3>Workforce Optimization Analysis</h3>
+        <h2>{target_tco['workforce_requirements']['total_fte']} FTE</h2>
+        <p>Required workforce with {metrics['automation_maturity']:.0f}% automation</p>
+        <p>Baseline (no automation): {baseline_tco['workforce_requirements']['total_fte']} FTE</p>
+        <p>FTE Reduction: {fte_reduction} positions</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1436,8 +1412,8 @@ with st.expander("Infrastructure Cost Calculations", expanded=False):
     **Infrastructure Grand Total**: ${target_tco['infrastructure']['total_monthly'] * timeframe:,.0f}
     """)
 
-with st.expander("Workforce Cost Calculations", expanded=False):
-    st.markdown("#### Workforce Components Breakdown (Realistic Automation Constraints)")
+with st.expander("Workforce Requirements Calculations", expanded=False):
+    st.markdown("#### Workforce FTE Breakdown (Realistic Automation Constraints)")
     
     # Calculate step by step with new logic
     base_dba = max(1, math.ceil(target_clusters / st.session_state.config_params['dba_ratio']))
@@ -1464,16 +1440,12 @@ with st.expander("Workforce Cost Calculations", expanded=False):
     final_automation = math.ceil(base_automation * support_multiplier * automation_multiplier)
     final_itil = math.ceil(base_itil * support_multiplier * itil_multiplier)
     
-    # Cost calculations
-    dba_annual_cost = final_dba * st.session_state.config_params['dba_salary'] * (1 + st.session_state.config_params['benefits_percentage'] / 100)
-    automation_annual_cost = final_automation * st.session_state.config_params['automation_salary'] * (1 + st.session_state.config_params['benefits_percentage'] / 100)
-    itil_annual_cost = final_itil * st.session_state.config_params['itil_salary'] * (1 + st.session_state.config_params['benefits_percentage'] / 100)
-    
     st.markdown(f"""
     **Base Staffing Requirements:**
     - SQL Server DBA Expert: {target_clusters} clusters ÷ {st.session_state.config_params['dba_ratio']} = {base_dba} FTE
     - Infrastructure Automation: {target_clusters} clusters ÷ {st.session_state.config_params['automation_ratio']} = {base_automation} FTE
     - ITIL Service Manager: {target_clusters} clusters ÷ {st.session_state.config_params['itil_ratio']} = {base_itil} FTE
+    - **Base Total**: {base_dba + base_automation + base_itil} FTE
     
     **Realistic Automation Constraints:**
     - Current Automation Maturity: {metrics['automation_maturity']:.1f}%
@@ -1491,29 +1463,24 @@ with st.expander("Workforce Cost Calculations", expanded=False):
       - Automation impact: {itil_automation_cap:.1f}% × 40% max reduction = {itil_reduction*100:.1f}% reduction
       - Workforce multiplier: {itil_multiplier:.3f}
     
-    **Adjusted Staffing (Accounting for Constraints):**
-    - SQL Server DBA Expert: {base_dba} × {support_multiplier:.1f} × {dba_multiplier:.3f} = {final_dba} FTE
-    - Infrastructure Automation: {base_automation} × {support_multiplier:.1f} × {automation_multiplier:.3f} = {final_automation} FTE
-    - ITIL Service Manager: {base_itil} × {support_multiplier:.1f} × {itil_multiplier:.3f} = {final_itil} FTE
+    **Final FTE Requirements (Accounting for Constraints):**
+    - SQL Server DBA Expert: {base_dba} × {support_multiplier:.1f} × {dba_multiplier:.3f} = **{final_dba} FTE**
+    - Infrastructure Automation: {base_automation} × {support_multiplier:.1f} × {automation_multiplier:.3f} = **{final_automation} FTE**
+    - ITIL Service Manager: {base_itil} × {support_multiplier:.1f} × {itil_multiplier:.3f} = **{final_itil} FTE**
     
-    **Annual Cost Calculations (including {st.session_state.config_params['benefits_percentage']}% benefits):**
-    - SQL Server DBA: {final_dba} × ${st.session_state.config_params['dba_salary']:,} × {1 + st.session_state.config_params['benefits_percentage'] / 100:.2f} = ${dba_annual_cost:,.0f}
-    - Infrastructure Automation: {final_automation} × ${st.session_state.config_params['automation_salary']:,} × {1 + st.session_state.config_params['benefits_percentage'] / 100:.2f} = ${automation_annual_cost:,.0f}
-    - ITIL Service Manager: {final_itil} × ${st.session_state.config_params['itil_salary']:,} × {1 + st.session_state.config_params['benefits_percentage'] / 100:.2f} = ${itil_annual_cost:,.0f}
+    **Total Required Workforce**: {final_dba + final_automation + final_itil} FTE
+    **Workforce Reduction**: {(base_dba + base_automation + base_itil) - (final_dba + final_automation + final_itil)} FTE ({((base_dba + base_automation + base_itil) - (final_dba + final_automation + final_itil))/(base_dba + base_automation + base_itil)*100:.1f}% reduction)
     
     **Enterprise Reality Check:**
     - 35% of operations lack APIs and require manual intervention
     - Complex troubleshooting needs human expertise and judgment
     - Critical decisions cannot be fully automated for risk management
     - Change management and stakeholder communication require human coordination
-    
-    **Total Annual Workforce Cost**: ${dba_annual_cost + automation_annual_cost + itil_annual_cost:,.0f}
-    **{timeframe}-Month Workforce Cost**: ${(dba_annual_cost + automation_annual_cost + itil_annual_cost) * (timeframe / 12):,.0f}
     """)
 
     # Compare with unrealistic automation assumptions
     st.markdown("---")
-    st.markdown("**❌ Why 85% Automation is Unrealistic:**")
+    st.markdown("**Why 85% Automation is Unrealistic:**")
     st.markdown("""
     - **Legacy Constraint**: 35% of database operations lack modern APIs
     - **Human Judgment**: Complex performance issues require expert analysis
@@ -1522,9 +1489,7 @@ with st.expander("Workforce Cost Calculations", expanded=False):
     """)
     
     if effective_automation < metrics['automation_maturity']:
-        st.warning(f"Automation maturity capped at {st.session_state.config_params['max_automation_maturity']}% due to enterprise constraints")
-
-with st.expander("Total Cost of Ownership Formula", expanded=False):
+        st.warning(f"Automation maturity capped at {st.session_state.config_params['max_automation_maturity']}% due to enterprise constraints")with st.expander("Total Cost of Ownership Formula", expanded=False):
     st.markdown(f"""
     **TCO Calculation Summary:**
     
