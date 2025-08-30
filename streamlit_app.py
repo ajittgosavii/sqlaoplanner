@@ -18,14 +18,6 @@ except ImportError:
 
 # Page configuration
 st.set_page_config(
-    page_title="Enterprise SQL AlwaysOn Scaling Planner with Cost Analysis",
-    page_icon="💰",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# Page configuration
-st.set_page_config(
     page_title="Enterprise SQL Server Scaling Platform | Strategic Planning & TCO Analysis",
     page_icon="🏢",
     layout="wide",
@@ -184,7 +176,7 @@ st.markdown("""
 st.markdown('<h1 class="main-header">Enterprise SQL Server Infrastructure Planning Platform</h1>', unsafe_allow_html=True)
 st.markdown('''
 <div class="enterprise-badge">
-Strategic Planning | Total Cost of Ownership Analysis | Infrastructure Automation | Service Management Framework | Governance & Compliance
+Workforce-Centric Analysis | Dynamic Parameters | Infrastructure Automation | Service Management Framework | Governance & Compliance
 </div>
 ''', unsafe_allow_html=True)
 
@@ -193,11 +185,10 @@ if not BOTO3_AVAILABLE:
     st.info("Real-time AWS pricing integration unavailable. Using representative pricing data. To enable live pricing updates, install boto3 package and configure AWS credentials.")
 
 # AWS Pricing API Integration
-@st.cache_data(ttl=3600)  # Cache for 1 hour
+@st.cache_data(ttl=3600)
 def get_aws_pricing():
     """Fetch real-time AWS pricing including SQL Server License-Included costs"""
     
-    # Return fallback data if boto3 is not available
     if not BOTO3_AVAILABLE:
         return {
             'ec2_windows': {
@@ -226,11 +217,9 @@ def get_aws_pricing():
         }
     
     try:
-        # Check if AWS secrets are available
         if "aws" not in st.secrets:
             raise Exception("AWS secrets not configured")
             
-        # Initialize AWS client using Streamlit secrets
         session = boto3.Session(
             aws_access_key_id=st.secrets["aws"]["access_key_id"],
             aws_secret_access_key=st.secrets["aws"]["secret_access_key"],
@@ -240,7 +229,6 @@ def get_aws_pricing():
         pricing_client = session.client('pricing', region_name='us-east-1')
         
         def get_ec2_pricing(sql_edition=None):
-            """Get EC2 pricing for specific SQL Server edition"""
             filters = [
                 {'Type': 'TERM_MATCH', 'Field': 'tenancy', 'Value': 'Shared'},
                 {'Type': 'TERM_MATCH', 'Field': 'operatingSystem', 'Value': 'Windows'},
@@ -263,7 +251,6 @@ def get_aws_pricing():
                 product_data = json.loads(product, parse_float=Decimal)
                 instance_type = product_data['product']['attributes'].get('instanceType')
                 if instance_type:
-                    # Extract on-demand pricing
                     for price_dimension in product_data['terms']['OnDemand'].values():
                         for price_detail in price_dimension['priceDimensions'].values():
                             price_per_hour = float(price_detail['pricePerUnit']['USD'])
@@ -272,13 +259,11 @@ def get_aws_pricing():
                         break
             return pricing
         
-        # Get pricing for different SQL Server editions
-        ec2_windows = get_ec2_pricing()  # Windows only
+        ec2_windows = get_ec2_pricing()
         ec2_sql_web = get_ec2_pricing('Web')
         ec2_sql_standard = get_ec2_pricing('Standard') 
         ec2_sql_enterprise = get_ec2_pricing('Enterprise')
         
-        # EBS and SSM pricing (simplified - can be enhanced with API calls)
         ebs_pricing = {'gp3': 0.08, 'gp2': 0.10, 'io2': 0.125, 'io1': 0.125}
         ssm_pricing = {'patch_manager': 0.00972}
         
@@ -293,103 +278,40 @@ def get_aws_pricing():
         }
         
     except Exception as e:
-        # Fallback pricing if API call fails or credentials not available
-        return {
-            'ec2_windows': {
-                'm5.xlarge': 0.384, 'm5.2xlarge': 0.768, 'm5.4xlarge': 1.536, 'm5.8xlarge': 3.072,
-                'm5.12xlarge': 4.608, 'm5.16xlarge': 6.144, 'r5.xlarge': 0.504, 'r5.2xlarge': 1.008,
-                'r5.4xlarge': 2.016, 'r5.8xlarge': 4.032, 'r5.12xlarge': 6.048, 'r5.16xlarge': 8.064
-            },
-            'ec2_sql_web': {
-                'm5.xlarge': 0.432, 'm5.2xlarge': 0.864, 'm5.4xlarge': 1.728, 'm5.8xlarge': 3.456,
-                'm5.12xlarge': 5.184, 'm5.16xlarge': 6.912, 'r5.xlarge': 0.552, 'r5.2xlarge': 1.104,
-                'r5.4xlarge': 2.208, 'r5.8xlarge': 4.416, 'r5.12xlarge': 6.624, 'r5.16xlarge': 8.832
-            },
-            'ec2_sql_standard': {
-                'm5.xlarge': 0.768, 'm5.2xlarge': 1.536, 'm5.4xlarge': 3.072, 'm5.8xlarge': 6.144,
-                'm5.12xlarge': 9.216, 'm5.16xlarge': 12.288, 'r5.xlarge': 1.008, 'r5.2xlarge': 2.016,
-                'r5.4xlarge': 4.032, 'r5.8xlarge': 8.064, 'r5.12xlarge': 12.096, 'r5.16xlarge': 16.128
-            },
-            'ec2_sql_enterprise': {
-                'm5.xlarge': 1.344, 'm5.2xlarge': 2.688, 'm5.4xlarge': 5.376, 'm5.8xlarge': 10.752,
-                'm5.12xlarge': 16.128, 'm5.16xlarge': 21.504, 'r5.xlarge': 1.584, 'r5.2xlarge': 3.168,
-                'r5.4xlarge': 6.336, 'r5.8xlarge': 12.672, 'r5.12xlarge': 19.008, 'r5.16xlarge': 25.344
-            },
-            'ebs': {'gp3': 0.08, 'gp2': 0.10, 'io2': 0.125, 'io1': 0.125},
-            'ssm': {'patch_manager': 0.00972},
-            'last_updated': 'Fallback Data'
-        }
-
-# Microsoft SQL Server Licensing Calculator (AWS License-Included Model)
-def calculate_sql_server_licensing_aws(deployment_type, instance_type, num_instances, edition="Standard"):
-    """Calculate SQL Server licensing costs using AWS License-Included pricing"""
-    
-    # Get appropriate pricing based on edition
-    edition_key_map = {
-        "Web": "ec2_sql_web",
-        "Standard": "ec2_sql_standard", 
-        "Enterprise": "ec2_sql_enterprise"
-    }
-    
-    edition_key = edition_key_map.get(edition, "ec2_sql_standard")
-    windows_rate = pricing_data['ec2_windows'].get(instance_type, 0.384)  # Fallback to m5.xlarge Windows rate
-    sql_rate = pricing_data[edition_key].get(instance_type, windows_rate * 2)  # Fallback with 2x multiplier
-    
-    # Calculate the licensing component (SQL Server price - Windows price)
-    licensing_hourly_rate = sql_rate - windows_rate
-    licensing_monthly_cost = licensing_hourly_rate * 24 * 30
-    
-    if deployment_type == "AlwaysOn Cluster":
-        # AlwaysOn requires licensing all nodes in the cluster (typically 3 nodes)
-        total_monthly_cost = licensing_monthly_cost * 3 * num_instances
-    else:
-        total_monthly_cost = licensing_monthly_cost * num_instances
-    
-    return {
-        "monthly_cost": total_monthly_cost,
-        "annual_cost": total_monthly_cost * 12,
-        "licensing_model": "AWS License-Included", 
-        "edition": edition,
-        "hourly_rate_per_instance": licensing_hourly_rate,
-        "notes": f"Based on AWS {edition} License-Included pricing vs Windows-only pricing"
-    }
+        return get_aws_pricing()  # Return fallback data
 
 # Load AWS pricing
 pricing_data = get_aws_pricing()
 
-# Global certification mapping
-skills_certifications = {
-    'SQL Server DBA Expert': 'Microsoft Certified: Azure Database Administrator', 
-    'Infrastructure Automation': 'Terraform Associate',
-    'ITIL Service Manager': 'ITIL 4 Managing Professional'
-}
-
-# Global skills requirements calculation function  
-def calculate_skills_requirements(clusters, automation_level, support_24x7):
-    """Calculate required skills based on scaling parameters"""
-    
-    base_requirements = {
-        'SQL Server DBA Expert': max(2, math.ceil(clusters / 15)),
-        'Infrastructure Automation': max(1, math.ceil(clusters / 30)),
-        'ITIL Service Manager': max(1, math.ceil(clusters / 50)),
-    }
-    
-    automation_multiplier = 1.0 - (automation_level / 100 * 0.3)
-    support_multiplier = 1.4 if support_24x7 else 1.0
-    
-    adjusted_requirements = {}
-    for role, base_req in base_requirements.items():
-        if role in ['SQL Server DBA Expert', 'ITIL Service Manager']:
-            adjusted_req = math.ceil(base_req * support_multiplier * max(0.7, automation_multiplier))
-        else:
-            adjusted_req = math.ceil(base_req * support_multiplier * automation_multiplier)
-        
-        adjusted_requirements[role] = max(1, adjusted_req) if base_req > 0 else 0
-    
-    return adjusted_requirements
-
 # Initialize comprehensive enterprise state
 def initialize_enterprise_state():
+    # Dynamic Configuration Parameters
+    if 'config_params' not in st.session_state:
+        st.session_state.config_params = {
+            # Workforce parameters
+            'dba_ratio': 15,  # clusters per DBA
+            'automation_ratio': 30,  # clusters per automation engineer
+            'itil_ratio': 50,  # clusters per ITIL manager
+            'max_automation_reduction': 40,  # max workforce reduction from automation
+            'support_24x7_multiplier': 1.4,
+            
+            # Salary parameters
+            'dba_salary': 120000,
+            'automation_salary': 140000,
+            'itil_salary': 100000,
+            'benefits_percentage': 35,
+            
+            # Benchmarks
+            'benchmark_availability_avg': 99.5,
+            'benchmark_availability_leader': 99.99,
+            'benchmark_automation_avg': 45,
+            'benchmark_automation_leader': 85,
+            'benchmark_itil_avg': 60,
+            'benchmark_itil_leader': 90,
+            'benchmark_rto_avg': 240,
+            'benchmark_rto_leader': 60
+        }
+    
     if 'current_skills' not in st.session_state:
         st.session_state.current_skills = {
             'SQL Server DBA Expert': 3, 
@@ -424,114 +346,127 @@ def initialize_enterprise_state():
 
 initialize_enterprise_state()
 
-# Enhanced automation components (COMPLETE list from original)
+# Enhanced automation components (COMPLETE list with workforce focus)
 if 'automation_components' not in st.session_state:
     st.session_state.automation_components = {
         # Infrastructure & Cloud (Enhanced)
         'Infrastructure as Code': {
             'enabled': False, 'weight': 8, 'effort': 150, 'category': 'Infrastructure',
             'description': 'Terraform for VPC, subnets, security groups, EC2 instances',
-            'business_impact': 'High', 'technical_complexity': 'Medium', 'cost_savings': 15
+            'business_impact': 'High', 'technical_complexity': 'Medium', 'workforce_reduction': 25
         },
         'Multi-AZ High Availability': {
             'enabled': False, 'weight': 9, 'effort': 120, 'category': 'Infrastructure',
             'description': 'Automated failover across availability zones',
-            'business_impact': 'Critical', 'technical_complexity': 'High', 'cost_savings': 5
+            'business_impact': 'Critical', 'technical_complexity': 'High', 'workforce_reduction': 15
         },
         'Auto Scaling & Load Balancing': {
             'enabled': False, 'weight': 7, 'effort': 100, 'category': 'Infrastructure',
             'description': 'Dynamic resource scaling based on demand',
-            'business_impact': 'High', 'technical_complexity': 'Medium', 'cost_savings': 25
+            'business_impact': 'High', 'technical_complexity': 'Medium', 'workforce_reduction': 30
         },
         'Network Security Automation': {
             'enabled': False, 'weight': 8, 'effort': 90, 'category': 'Infrastructure',
             'description': 'Automated security group and NACLs management',
-            'business_impact': 'High', 'technical_complexity': 'Medium', 'cost_savings': 10
+            'business_impact': 'High', 'technical_complexity': 'Medium', 'workforce_reduction': 20
         },
         
         # Database & Performance (Enhanced)
         'SQL AlwaysOn Automation': {
             'enabled': False, 'weight': 10, 'effort': 200, 'category': 'Database',
             'description': 'Automated SQL Server AlwaysOn configuration and management',
-            'business_impact': 'Critical', 'technical_complexity': 'High', 'cost_savings': 20
+            'business_impact': 'Critical', 'technical_complexity': 'High', 'workforce_reduction': 35
         },
         'Performance Optimization Engine': {
             'enabled': False, 'weight': 6, 'effort': 120, 'category': 'Database',
             'description': 'AI-driven query optimization and index management',
-            'business_impact': 'Medium', 'technical_complexity': 'High', 'cost_savings': 15
+            'business_impact': 'Medium', 'technical_complexity': 'High', 'workforce_reduction': 25
         },
         'Database Lifecycle Management': {
             'enabled': False, 'weight': 7, 'effort': 150, 'category': 'Database',
             'description': 'Automated provisioning, scaling, and decommissioning',
-            'business_impact': 'High', 'technical_complexity': 'Medium', 'cost_savings': 18
+            'business_impact': 'High', 'technical_complexity': 'Medium', 'workforce_reduction': 30
         },
         
         # Security & Compliance (Enhanced)
         'Zero-Trust Security Model': {
             'enabled': False, 'weight': 9, 'effort': 180, 'category': 'Security',
             'description': 'Identity-based access controls with continuous verification',
-            'business_impact': 'Critical', 'technical_complexity': 'High', 'cost_savings': 8
+            'business_impact': 'Critical', 'technical_complexity': 'High', 'workforce_reduction': 15
         },
         'Automated Patch Management': {
             'enabled': False, 'weight': 8, 'effort': 140, 'category': 'Security',
             'description': 'Orchestrated patching with rollback capabilities',
-            'business_impact': 'High', 'technical_complexity': 'Medium', 'cost_savings': 30
+            'business_impact': 'High', 'technical_complexity': 'Medium', 'workforce_reduction': 40
         },
         'Compliance Monitoring': {
             'enabled': False, 'weight': 7, 'effort': 100, 'category': 'Security',
             'description': 'Continuous compliance validation and reporting',
-            'business_impact': 'Critical', 'technical_complexity': 'Medium', 'cost_savings': 12
+            'business_impact': 'Critical', 'technical_complexity': 'Medium', 'workforce_reduction': 20
         },
         'Data Loss Prevention': {
             'enabled': False, 'weight': 8, 'effort': 120, 'category': 'Security',
             'description': 'Automated data classification and protection',
-            'business_impact': 'Critical', 'technical_complexity': 'High', 'cost_savings': 10
+            'business_impact': 'Critical', 'technical_complexity': 'High', 'workforce_reduction': 18
         },
         
         # Operations & Monitoring (Enhanced)
         'AI-Powered Monitoring': {
             'enabled': False, 'weight': 8, 'effort': 140, 'category': 'Operations',
             'description': 'Machine learning-based anomaly detection and prediction',
-            'business_impact': 'High', 'technical_complexity': 'High', 'cost_savings': 22
+            'business_impact': 'High', 'technical_complexity': 'High', 'workforce_reduction': 45
         },
         'Automated Incident Response': {
             'enabled': False, 'weight': 9, 'effort': 160, 'category': 'Operations',
             'description': 'Self-healing systems with escalation workflows',
-            'business_impact': 'Critical', 'technical_complexity': 'High', 'cost_savings': 35
+            'business_impact': 'Critical', 'technical_complexity': 'High', 'workforce_reduction': 50
         },
         'Service Orchestration': {
             'enabled': False, 'weight': 6, 'effort': 100, 'category': 'Operations',
             'description': 'Workflow automation across enterprise systems',
-            'business_impact': 'Medium', 'technical_complexity': 'Medium', 'cost_savings': 15
+            'business_impact': 'Medium', 'technical_complexity': 'Medium', 'workforce_reduction': 25
         },
         
         # Backup & Recovery (Enhanced)
         'Cross-Region DR Automation': {
             'enabled': False, 'weight': 9, 'effort': 200, 'category': 'Backup',
             'description': 'Automated disaster recovery across geographic regions',
-            'business_impact': 'Critical', 'technical_complexity': 'High', 'cost_savings': 12
+            'business_impact': 'Critical', 'technical_complexity': 'High', 'workforce_reduction': 20
         },
         'Point-in-Time Recovery': {
             'enabled': False, 'weight': 7, 'effort': 120, 'category': 'Backup',
             'description': 'Granular recovery with minimal data loss',
-            'business_impact': 'High', 'technical_complexity': 'Medium', 'cost_savings': 8
+            'business_impact': 'High', 'technical_complexity': 'Medium', 'workforce_reduction': 15
         },
         
         # Governance & Integration
         'Enterprise Service Bus': {
             'enabled': False, 'weight': 6, 'effort': 180, 'category': 'Integration',
             'description': 'API gateway and service mesh integration',
-            'business_impact': 'Medium', 'technical_complexity': 'High', 'cost_savings': 10
+            'business_impact': 'Medium', 'technical_complexity': 'High', 'workforce_reduction': 12
         },
         'Self-Service Portal': {
             'enabled': False, 'weight': 5, 'effort': 150, 'category': 'Portal',
             'description': 'Enterprise portal with RBAC and workflow approval',
-            'business_impact': 'Medium', 'technical_complexity': 'Medium', 'cost_savings': 20
+            'business_impact': 'Medium', 'technical_complexity': 'Medium', 'workforce_reduction': 35
         }
     }
 
-# Sidebar configuration
+# Sidebar configuration with dynamic parameters
 st.sidebar.header("Configuration Panel")
+
+# Configuration Parameters
+st.sidebar.subheader("Dynamic Parameters")
+with st.sidebar.expander("Workforce Ratios"):
+    st.session_state.config_params['dba_ratio'] = st.number_input("Clusters per DBA", min_value=5, max_value=50, value=st.session_state.config_params['dba_ratio'])
+    st.session_state.config_params['automation_ratio'] = st.number_input("Clusters per Automation Engineer", min_value=10, max_value=100, value=st.session_state.config_params['automation_ratio'])
+    st.session_state.config_params['itil_ratio'] = st.number_input("Clusters per ITIL Manager", min_value=20, max_value=200, value=st.session_state.config_params['itil_ratio'])
+
+with st.sidebar.expander("Salary Parameters"):
+    st.session_state.config_params['dba_salary'] = st.number_input("DBA Annual Salary", min_value=50000, max_value=200000, value=st.session_state.config_params['dba_salary'], step=5000)
+    st.session_state.config_params['automation_salary'] = st.number_input("Automation Engineer Salary", min_value=60000, max_value=250000, value=st.session_state.config_params['automation_salary'], step=5000)
+    st.session_state.config_params['itil_salary'] = st.number_input("ITIL Manager Salary", min_value=50000, max_value=180000, value=st.session_state.config_params['itil_salary'], step=5000)
+    st.session_state.config_params['benefits_percentage'] = st.number_input("Benefits Percentage", min_value=20, max_value=60, value=st.session_state.config_params['benefits_percentage'])
 
 # Deployment Type Selection
 st.sidebar.subheader("Architecture Configuration")
@@ -611,11 +546,68 @@ rto_minutes = st.sidebar.slider("Recovery Time Objective (minutes)", 15, 1440, 2
 # Support model
 support_24x7 = st.sidebar.checkbox("24x7 Global Support Coverage", value=False)
 
-# Cost calculation functions
+# Skills requirements calculation with dynamic parameters
+def calculate_skills_requirements(clusters, automation_level, support_24x7):
+    """Calculate required skills based on dynamic parameters"""
+    
+    base_requirements = {
+        'SQL Server DBA Expert': max(1, math.ceil(clusters / st.session_state.config_params['dba_ratio'])),
+        'Infrastructure Automation': max(1, math.ceil(clusters / st.session_state.config_params['automation_ratio'])),
+        'ITIL Service Manager': max(1, math.ceil(clusters / st.session_state.config_params['itil_ratio'])),
+    }
+    
+    # Apply automation reduction (workforce-focused)
+    automation_multiplier = 1.0 - (automation_level / 100 * st.session_state.config_params['max_automation_reduction'] / 100)
+    support_multiplier = st.session_state.config_params['support_24x7_multiplier'] if support_24x7 else 1.0
+    
+    adjusted_requirements = {}
+    for role, base_req in base_requirements.items():
+        if role in ['SQL Server DBA Expert', 'ITIL Service Manager']:
+            # These roles benefit less from automation
+            adjusted_req = math.ceil(base_req * support_multiplier * max(0.6, automation_multiplier))
+        else:
+            # Infrastructure automation roles benefit more from automation
+            adjusted_req = math.ceil(base_req * support_multiplier * max(0.4, automation_multiplier))
+        
+        adjusted_requirements[role] = max(1, adjusted_req) if base_req > 0 else 0
+    
+    return adjusted_requirements
+
+# Microsoft SQL Server Licensing Calculator (AWS License-Included Model)
+def calculate_sql_server_licensing_aws(deployment_type, instance_type, num_instances, edition="Standard"):
+    """Calculate SQL Server licensing costs using AWS License-Included pricing"""
+    
+    edition_key_map = {
+        "Web": "ec2_sql_web",
+        "Standard": "ec2_sql_standard", 
+        "Enterprise": "ec2_sql_enterprise"
+    }
+    
+    edition_key = edition_key_map.get(edition, "ec2_sql_standard")
+    windows_rate = pricing_data['ec2_windows'].get(instance_type, 0.384)
+    sql_rate = pricing_data[edition_key].get(instance_type, windows_rate * 2)
+    
+    licensing_hourly_rate = sql_rate - windows_rate
+    licensing_monthly_cost = licensing_hourly_rate * 24 * 30
+    
+    if deployment_type == "AlwaysOn Cluster":
+        total_monthly_cost = licensing_monthly_cost * 3 * num_instances
+    else:
+        total_monthly_cost = licensing_monthly_cost * num_instances
+    
+    return {
+        "monthly_cost": total_monthly_cost,
+        "annual_cost": total_monthly_cost * 12,
+        "licensing_model": "AWS License-Included", 
+        "edition": edition,
+        "hourly_rate_per_instance": licensing_hourly_rate,
+        "notes": f"Based on AWS {edition} License-Included pricing vs Windows-only pricing"
+    }
+
+# Cost calculation functions with dynamic parameters
 def calculate_infrastructure_costs(clusters, instance_type, instances_per_cluster, storage_tb, ebs_type, enable_patching, sql_edition):
     """Calculate comprehensive infrastructure costs including SQL Server licensing"""
     
-    # Get pricing rates
     windows_rate = pricing_data['ec2_windows'].get(instance_type, 0.384)
     
     edition_key_map = {
@@ -628,24 +620,19 @@ def calculate_infrastructure_costs(clusters, instance_type, instances_per_cluste
     
     total_instances = clusters * instances_per_cluster
     
-    # EC2 costs (using SQL Server License-Included pricing)
     monthly_ec2_cost = sql_windows_rate * 24 * 30 * total_instances
     
-    # EBS costs
     ebs_rate_per_gb = pricing_data['ebs'][ebs_type]
     storage_gb = storage_tb * 1024
     monthly_ebs_cost = ebs_rate_per_gb * storage_gb * total_instances
     
-    # SSM Patch Management costs
     monthly_ssm_cost = 0
     if enable_patching:
         ssm_hourly_rate = pricing_data['ssm']['patch_manager']
         monthly_ssm_cost = ssm_hourly_rate * 24 * 30 * total_instances
     
-    # Data transfer costs (estimate based on cluster communication)
     monthly_data_transfer = clusters * 25 if deployment_type == "AlwaysOn Cluster" else clusters * 10
     
-    # Calculate SQL licensing component separately for visibility
     licensing_hourly_rate = sql_windows_rate - windows_rate
     monthly_licensing_cost = licensing_hourly_rate * 24 * 30 * total_instances
     
@@ -659,26 +646,52 @@ def calculate_infrastructure_costs(clusters, instance_type, instances_per_cluste
         'total_instances': total_instances
     }
 
-def calculate_total_cost_of_ownership(clusters, timeframe_months, include_staffing=False, custom_monthly_staffing=0):
-    """Calculate comprehensive TCO with optional staffing costs"""
+def calculate_workforce_costs(skills_requirements):
+    """Calculate workforce costs based on dynamic salary parameters"""
     
-    # Infrastructure costs (includes SQL licensing via AWS License-Included pricing)
+    annual_salaries = {
+        'SQL Server DBA Expert': st.session_state.config_params['dba_salary'],
+        'Infrastructure Automation': st.session_state.config_params['automation_salary'],
+        'ITIL Service Manager': st.session_state.config_params['itil_salary']
+    }
+    
+    annual_workforce_cost = 0
+    breakdown = {}
+    for role, count in skills_requirements.items():
+        base_salary = annual_salaries.get(role, 100000)
+        total_cost = base_salary * (1 + st.session_state.config_params['benefits_percentage'] / 100) * count
+        annual_workforce_cost += total_cost
+        breakdown[role] = total_cost
+    
+    monthly_workforce_cost = annual_workforce_cost / 12
+    
+    return {
+        'annual_cost': annual_workforce_cost,
+        'monthly_cost': monthly_workforce_cost,
+        'breakdown': breakdown
+    }
+
+def calculate_total_cost_of_ownership(clusters, automation_level, timeframe_months):
+    """Calculate comprehensive TCO with workforce focus"""
+    
+    # Infrastructure costs (static based on cluster count)
     infra_costs = calculate_infrastructure_costs(
-        clusters, instance_type, ec2_per_cluster, current_storage_tb, ebs_volume_type, enable_ssm_patching, sql_edition
+        clusters, instance_type, ec2_per_cluster, current_storage_tb, 
+        ebs_volume_type, enable_ssm_patching, sql_edition
     )
     
-    # Staffing costs (only if explicitly requested)
-    monthly_staffing_cost = custom_monthly_staffing if include_staffing else 0
+    # Workforce costs (reduced by automation)
+    skills_needed = calculate_skills_requirements(clusters, automation_level, support_24x7)
+    workforce_costs = calculate_workforce_costs(skills_needed)
     
-    # Calculate monthly total
-    monthly_total = infra_costs['total_monthly'] + monthly_staffing_cost
-    
-    # Total TCO over timeframe
+    # Total monthly cost
+    monthly_total = infra_costs['total_monthly'] + workforce_costs['monthly_cost']
     total_tco = monthly_total * timeframe_months
     
     return {
         'infrastructure': infra_costs,
-        'staffing_monthly': monthly_staffing_cost,
+        'workforce': workforce_costs,
+        'skills_required': skills_needed,
         'monthly_total': monthly_total,
         'total_tco': total_tco,
         'tco_breakdown': {
@@ -687,22 +700,28 @@ def calculate_total_cost_of_ownership(clusters, timeframe_months, include_staffi
             'EBS Storage': infra_costs['ebs_monthly'] * timeframe_months,
             'SSM Patching': infra_costs['ssm_monthly'] * timeframe_months,
             'Data Transfer': infra_costs['data_transfer_monthly'] * timeframe_months,
-            'Staffing': monthly_staffing_cost * timeframe_months if include_staffing else 0
+            'Workforce': workforce_costs['annual_cost'] * (timeframe_months / 12)
         }
     }
 
 # Calculate comprehensive enterprise metrics
 def calculate_enterprise_metrics():
-    """Calculate enterprise-grade operational metrics"""
+    """Calculate enterprise-grade operational metrics with workforce focus"""
     
     total_weight = sum(comp['weight'] for comp in st.session_state.automation_components.values())
     enabled_weight = sum(comp['weight'] for comp in st.session_state.automation_components.values() if comp['enabled'])
     automation_maturity = (enabled_weight / total_weight) * 100 if total_weight > 0 else 0
     
-    total_cost_savings = sum(
-        comp['cost_savings'] for comp in st.session_state.automation_components.values() 
-        if comp['enabled']
-    ) / len([c for c in st.session_state.automation_components.values() if c['enabled']]) if any(comp['enabled'] for comp in st.session_state.automation_components.values()) else 0
+    # Calculate weighted workforce reduction potential
+    enabled_components = [comp for comp in st.session_state.automation_components.values() if comp['enabled']]
+    if enabled_components:
+        total_weight_enabled = sum(comp['weight'] for comp in enabled_components)
+        weighted_workforce_reduction = sum(
+            comp['workforce_reduction'] * (comp['weight'] / total_weight_enabled) 
+            for comp in enabled_components
+        )
+    else:
+        weighted_workforce_reduction = 0
     
     current_ec2_instances = current_clusters * ec2_per_cluster
     target_ec2_instances = target_clusters * ec2_per_cluster
@@ -765,7 +784,7 @@ def calculate_enterprise_metrics():
     
     return {
         'automation_maturity': automation_maturity,
-        'cost_savings_percentage': total_cost_savings,
+        'workforce_reduction_potential': weighted_workforce_reduction,
         'current_ec2_instances': current_ec2_instances,
         'target_ec2_instances': target_ec2_instances,
         'scale_factor': scale_factor,
@@ -778,9 +797,9 @@ def calculate_enterprise_metrics():
 
 metrics = calculate_enterprise_metrics()
 
-# Cost calculations
-current_tco = calculate_total_cost_of_ownership(current_clusters, timeframe)
-target_tco = calculate_total_cost_of_ownership(target_clusters, timeframe)
+# Calculate current and target scenarios
+current_tco = calculate_total_cost_of_ownership(current_clusters, metrics['automation_maturity'], timeframe)
+target_tco = calculate_total_cost_of_ownership(target_clusters, metrics['automation_maturity'], timeframe)
 
 # Executive Dashboard with Cost Metrics
 st.markdown('<div class="section-header">Executive Dashboard & Financial Analysis</div>', unsafe_allow_html=True)
@@ -794,19 +813,24 @@ with col1:
         <h3>Total Cost of Ownership Analysis</h3>
         <h2>${target_tco['total_tco']:,.0f}</h2>
         <p>{timeframe}-month projection | {target_clusters} {deployment_type.lower()}s</p>
-        <p>Monthly Operating Cost: ${target_tco['monthly_total']:,.0f}</p>
+        <p>Infrastructure: ${target_tco['tco_breakdown']['EC2 Compute'] + target_tco['tco_breakdown']['SQL Licensing (AWS)'] + target_tco['tco_breakdown']['EBS Storage']:,.0f}</p>
+        <p>Workforce: ${target_tco['tco_breakdown']['Workforce']:,.0f}</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
-    potential_savings = target_tco['total_tco'] * (metrics['cost_savings_percentage'] / 100)
-    optimized_tco = target_tco['total_tco'] - potential_savings
+    # Calculate potential workforce savings
+    baseline_automation = 0  # No automation scenario
+    baseline_tco = calculate_total_cost_of_ownership(target_clusters, baseline_automation, timeframe)
+    workforce_savings = baseline_tco['tco_breakdown']['Workforce'] - target_tco['tco_breakdown']['Workforce']
+    
     st.markdown(f"""
     <div class="savings-highlight">
-        <h3>Automation Optimization Potential</h3>
-        <h2>${potential_savings:,.0f}</h2>
-        <p>{metrics['cost_savings_percentage']:.1f}% cost reduction through automation</p>
-        <p>Optimized TCO: ${optimized_tco:,.0f}</p>
+        <h3>Workforce Optimization Potential</h3>
+        <h2>${workforce_savings:,.0f}</h2>
+        <p>{metrics['workforce_reduction_potential']:.1f}% workforce reduction through automation</p>
+        <p>Baseline Workforce Cost: ${baseline_tco['tco_breakdown']['Workforce']:,.0f}</p>
+        <p>Optimized Workforce Cost: ${target_tco['tco_breakdown']['Workforce']:,.0f}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -851,7 +875,7 @@ st.markdown(f"""
 <div class="executive-summary">
 <h4>Strategic Workforce Analysis</h4>
 <p><strong>Infrastructure Scale:</strong> {target_clusters} {deployment_type.lower()}s planned over {timeframe} months</p>
-<p><strong>Automation Impact:</strong> {metrics['automation_maturity']:.0f}% automation maturity reduces workforce requirements by up to 30%</p>
+<p><strong>Automation Impact:</strong> {metrics['automation_maturity']:.0f}% automation maturity reduces workforce requirements through operational efficiency</p>
 <p><strong>Service Coverage:</strong> {'Continuous operations (24x7)' if support_24x7 else 'Standard business hours'} support model</p>
 <p><strong>Focus Areas:</strong> Core operational roles for SQL Server administration and infrastructure management</p>
 </div>
@@ -880,6 +904,12 @@ st.markdown('<div class="subsection-header">Resource Gap Analysis</div>', unsafe
 
 required_skills = calculate_skills_requirements(target_clusters, metrics['automation_maturity'], support_24x7)
 
+skills_certifications = {
+    'SQL Server DBA Expert': 'Microsoft Certified: Azure Database Administrator', 
+    'Infrastructure Automation': 'Terraform Associate',
+    'ITIL Service Manager': 'ITIL 4 Managing Professional'
+}
+
 skills_data = []
 for role in required_skills.keys():
     current = st.session_state.current_skills.get(role, 0)
@@ -900,22 +930,24 @@ skills_df = pd.DataFrame(skills_data)
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    st.dataframe(skills_df[['Role', 'Current Staff', 'Required for Target', 'Gap', 'Status', 'Certification Required']], width='stretch')
+    st.dataframe(skills_df[['Role', 'Current Staff', 'Required for Target', 'Gap', 'Status', 'Certification Required']], use_container_width=True)
     
     with st.expander("Methodology: Resource Requirements Calculation"):
-        st.markdown("""
-        **Calculation Framework (Operations-Focused):**
+        st.markdown(f"""
+        **Calculation Framework (Workforce-Centric with Dynamic Parameters):**
         
         1. **Base Resource Requirements by Role:**
-           - SQL Server DBA Expert: 1 FTE per 15 infrastructure clusters
-           - Infrastructure Automation: 1 FTE per 30 infrastructure clusters  
-           - ITIL Service Manager: 1 FTE per 50 infrastructure clusters
+           - SQL Server DBA Expert: 1 FTE per {st.session_state.config_params['dba_ratio']} infrastructure clusters
+           - Infrastructure Automation: 1 FTE per {st.session_state.config_params['automation_ratio']} infrastructure clusters  
+           - ITIL Service Manager: 1 FTE per {st.session_state.config_params['itil_ratio']} infrastructure clusters
         
-        2. **Automation Efficiency Factor:** Up to 30% reduction in staffing requirements with mature automation
+        2. **Automation Efficiency Factor:** Up to {st.session_state.config_params['max_automation_reduction']}% reduction in staffing requirements with mature automation
         
-        3. **Service Coverage Multiplier:** 40% increase for continuous operations (24x7) coverage
+        3. **Service Coverage Multiplier:** {st.session_state.config_params['support_24x7_multiplier']}x increase for continuous operations (24x7) coverage
         
         4. **Role-Specific Adjustments:** Infrastructure automation roles benefit more from technology adoption than administrative and service management roles
+        
+        5. **Dynamic Configuration:** All ratios and multipliers are configurable via sidebar parameters
         """)
 
 with col2:
@@ -939,7 +971,7 @@ with col2:
             st.error("Significant resource shortfalls")
     
     if metrics['automation_maturity'] > 30:
-        st.info(f"Automation framework reduces staffing requirements by approximately {metrics['automation_maturity']/100*30:.0f}%")
+        st.info(f"Automation framework reduces staffing requirements by approximately {metrics['workforce_reduction_potential']:.0f}%")
 
 # Monthly Forecasting System
 st.markdown("---")
@@ -1095,81 +1127,7 @@ for data in forecast_data:
         monthly_breakdown.append(month_row)
 
 breakdown_df = pd.DataFrame(monthly_breakdown)
-st.dataframe(breakdown_df, width='stretch')
-
-# Hiring recommendations
-st.markdown('<div class="subsection-header">Strategic Hiring Recommendations</div>', unsafe_allow_html=True)
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown("#### Priority 1: SQL Server DBA Expertise")
-    dba_hires = sum(d['new_hires_needed'].get('SQL Server DBA Expert', 0) for d in forecast_data)
-    st.write(f"**Total positions needed:** {dba_hires}")
-    st.write("**Recommended timeline:** Immediate commencement")
-    st.write("**Typical lead time:** 2-3 months")
-    st.write("**Focus competencies:** SQL Server AlwaysOn architecture")
-
-with col2:
-    st.markdown("#### Priority 2: Infrastructure Automation")
-    infra_hires = sum(d['new_hires_needed'].get('Infrastructure Automation', 0) for d in forecast_data)
-    st.write(f"**Total positions needed:** {infra_hires}")
-    st.write("**Recommended timeline:** Month 2-3")
-    st.write("**Typical lead time:** 1-2 months")
-    st.write("**Focus competencies:** Terraform, AWS automation")
-
-with col3:
-    st.markdown("#### Priority 3: ITIL Service Management")
-    itil_hires = sum(d['new_hires_needed'].get('ITIL Service Manager', 0) for d in forecast_data)
-    st.write(f"**Total positions needed:** {itil_hires}")
-    st.write("**Recommended timeline:** Month 4-6")
-    st.write("**Typical lead time:** 1-2 months") 
-    st.write("**Focus competencies:** Service operations, incident management")
-
-# Risk assessment for hiring plan
-st.markdown("---")
-st.markdown('<div class="subsection-header">Hiring Plan Risk Assessment</div>', unsafe_allow_html=True)
-
-hiring_risks = []
-
-if total_hires_needed > 10:
-    hiring_risks.append({
-        'risk': 'High-volume hiring may strain recruitment capacity and training resources',
-        'impact': 'Delayed onboarding timelines, potential quality compromises',
-        'mitigation': 'Engage external recruitment partners, implement structured onboarding program'
-    })
-
-if peak_monthly_hires > 3:
-    hiring_risks.append({
-        'risk': 'Peak hiring periods may overwhelm team integration processes',
-        'impact': 'Reduced productivity during integration, cultural assimilation challenges',
-        'mitigation': 'Stagger start dates, assign dedicated mentors, extend onboarding periods'
-    })
-
-skill_gaps = [role for role, gap in {
-    'SQL Server DBA Expert': sum(d['new_hires_needed'].get('SQL Server DBA Expert', 0) for d in forecast_data),
-    'Infrastructure Automation': sum(d['new_hires_needed'].get('Infrastructure Automation', 0) for d in forecast_data),
-    'ITIL Service Manager': sum(d['new_hires_needed'].get('ITIL Service Manager', 0) for d in forecast_data)
-}.items() if gap > 3]
-
-if skill_gaps:
-    hiring_risks.append({
-        'risk': f'High demand for specialized roles: {", ".join(skill_gaps)}',
-        'impact': 'Market scarcity, compensation inflation, extended recruitment cycles',
-        'mitigation': 'Early recruitment initiation, internal development programs, contractor bridge solutions'
-    })
-
-if hiring_risks:
-    for risk in hiring_risks:
-        st.markdown(f"""
-        <div class="risk-high">
-            <strong>Risk:</strong> {risk['risk']}<br>
-            <strong>Business Impact:</strong> {risk['impact']}<br>
-            <strong>Mitigation Strategy:</strong> {risk['mitigation']}
-        </div>
-        """, unsafe_allow_html=True)
-else:
-    st.success("Hiring plan appears manageable within standard organizational recruitment processes.")
+st.dataframe(breakdown_df, use_container_width=True)
 
 # ITIL 4 Service Management Framework
 st.markdown('<div class="section-header">ITIL 4 Service Management Framework</div>', unsafe_allow_html=True)
@@ -1240,14 +1198,15 @@ for tab, (category, display_name) in zip(tabs, categories.items()):
                 complexity_levels = {'High': 'HIGH', 'Medium': 'MEDIUM', 'Low': 'LOW'}
                 
                 st.caption(f"**Business Impact:** {impact_levels[comp_data['business_impact']]} | "
-                          f"**Technical Complexity:** {complexity_levels[comp_data['technical_complexity']]}")
+                          f"**Technical Complexity:** {complexity_levels[comp_data['technical_complexity']]} | "
+                          f"**Workforce Reduction:** {comp_data['workforce_reduction']}%")
                 
                 st.session_state.automation_components[comp_name]['enabled'] = enabled
             
             with col2:
                 st.write(f"**Priority Weight:** {comp_data['weight']}%")
                 st.write(f"**Implementation Effort:** {comp_data['effort']} hours")
-                st.write(f"**Cost Savings:** {comp_data['cost_savings']}%")
+                st.write(f"**Workforce Reduction:** {comp_data['workforce_reduction']}%")
             
             st.markdown("---")
 
@@ -1273,26 +1232,26 @@ st.markdown('<div class="section-header">Industry Benchmark Assessment</div>', u
 benchmark_scores = {
     'Database Availability': {
         'our_score': availability_target,
-        'industry_avg': 99.5,
-        'industry_leader': 99.99,
+        'industry_avg': st.session_state.config_params['benchmark_availability_avg'],
+        'industry_leader': st.session_state.config_params['benchmark_availability_leader'],
         'unit': '%'
     },
     'Automation Maturity': {
         'our_score': metrics['automation_maturity'],
-        'industry_avg': 45,
-        'industry_leader': 85,
+        'industry_avg': st.session_state.config_params['benchmark_automation_avg'],
+        'industry_leader': st.session_state.config_params['benchmark_automation_leader'],
         'unit': '%'
     },
     'ITIL Practice Coverage': {
         'our_score': metrics['itil_maturity'],
-        'industry_avg': 60,
-        'industry_leader': 90,
+        'industry_avg': st.session_state.config_params['benchmark_itil_avg'],
+        'industry_leader': st.session_state.config_params['benchmark_itil_leader'],
         'unit': '%'
     },
     'Recovery Time Objective': {
         'our_score': rto_minutes,
-        'industry_avg': 240,
-        'industry_leader': 60,
+        'industry_avg': st.session_state.config_params['benchmark_rto_avg'],
+        'industry_leader': st.session_state.config_params['benchmark_rto_leader'],
         'unit': 'minutes',
         'lower_is_better': True
     }
@@ -1367,7 +1326,7 @@ fig_tco = go.Figure(data=[
         name='Cost Components',
         x=list(target_tco['tco_breakdown'].keys()),
         y=list(target_tco['tco_breakdown'].values()),
-        marker_color=['#1e40af', '#dc2626', '#059669', '#f59e0b', '#7c3aed']
+        marker_color=['#1e40af', '#dc2626', '#059669', '#f59e0b', '#7c3aed', '#be123c']
     )
 ])
 
@@ -1383,18 +1342,42 @@ fig_tco.update_layout(
 
 st.plotly_chart(fig_tco, use_container_width=True)
 
-# SQL Server Licensing Analysis (AWS License-Included Model)
-st.markdown("### 📄 AWS SQL Server License-Included Analysis")
+# Workforce vs Infrastructure Cost Analysis
+st.markdown("### Workforce vs Infrastructure Cost Breakdown")
 
-# Calculate licensing info using AWS model
+workforce_pct = (target_tco['tco_breakdown']['Workforce'] / target_tco['total_tco']) * 100
+infrastructure_pct = 100 - workforce_pct
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric("Workforce Cost %", f"{workforce_pct:.1f}%")
+    st.metric("Infrastructure Cost %", f"{infrastructure_pct:.1f}%")
+
+with col2:
+    st.metric("Annual Workforce Cost", f"${target_tco['workforce']['annual_cost']:,.0f}")
+    infrastructure_annual = (target_tco['infrastructure']['total_monthly'] * 12)
+    st.metric("Annual Infrastructure Cost", f"${infrastructure_annual:,.0f}")
+
+with col3:
+    if workforce_pct > 60:
+        st.warning("Workforce costs dominate - automation opportunity")
+    elif workforce_pct > 40:
+        st.info("Balanced cost structure")
+    else:
+        st.success("Infrastructure-dominated costs - typical for mature automation")
+
+# SQL Server Licensing Analysis (AWS License-Included Model)
+st.markdown("### SQL Server License-Included Analysis")
+
 aws_licensing_info = calculate_sql_server_licensing_aws(deployment_type, instance_type, target_clusters, sql_edition)
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown(f"""
-    <div class="licensing-alert">
-        <h4>📋 AWS Licensing Summary</h4>
+    <div class="licensing-framework">
+        <h4>AWS Licensing Summary</h4>
         <p><strong>Edition:</strong> SQL Server {aws_licensing_info['edition']}</p>
         <p><strong>Model:</strong> {aws_licensing_info['licensing_model']}</p>
         <p><strong>Hourly Rate:</strong> ${aws_licensing_info['hourly_rate_per_instance']:.3f}/instance</p>
@@ -1403,217 +1386,152 @@ with col1:
     """, unsafe_allow_html=True)
 
 with col2:
-    st.metric("💰 Monthly Licensing", f"${aws_licensing_info['monthly_cost']:,.0f}")
-    st.metric("📅 Annual Licensing", f"${aws_licensing_info['annual_cost']:,.0f}")
+    st.metric("Monthly Licensing", f"${aws_licensing_info['monthly_cost']:,.0f}")
+    st.metric("Annual Licensing", f"${aws_licensing_info['annual_cost']:,.0f}")
 
 with col3:
     if deployment_type == "AlwaysOn Cluster":
-        st.info("💡 AWS License-Included pricing automatically covers all nodes in AlwaysOn clusters. No separate licensing calculation needed.")
+        st.info("AWS License-Included pricing automatically covers all nodes in AlwaysOn clusters. No separate licensing calculation needed.")
     else:
-        st.info("💡 AWS License-Included pricing simplifies licensing - no core counting or CAL management required.")
+        st.info("AWS License-Included pricing simplifies licensing - no core counting or CAL management required.")
     
     st.caption(f"**Pricing Model:** {aws_licensing_info['notes']}")
 
-# AWS Pricing Information
-st.markdown("---")
-st.markdown("### 📊 AWS Pricing Details & Transparency")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("#### 💻 Current AWS Pricing")
-    st.write(f"**Data Source:** {pricing_data['last_updated']}")
-    st.write(f"**Instance Type:** {instance_type}")
-    
-    # Show pricing breakdown
-    windows_rate = pricing_data['ec2_windows'].get(instance_type, 0)
-    edition_key = {"Web": "ec2_sql_web", "Standard": "ec2_sql_standard", "Enterprise": "ec2_sql_enterprise"}[sql_edition]
-    sql_rate = pricing_data[edition_key].get(instance_type, 0)
-    licensing_rate = sql_rate - windows_rate
-    
-    st.write(f"**Windows Only:** ${windows_rate:.3f}/hour")
-    st.write(f"**Windows + SQL {sql_edition}:** ${sql_rate:.3f}/hour")
-    st.write(f"**SQL Licensing Component:** ${licensing_rate:.3f}/hour")
-    
-    st.write(f"**EBS {ebs_volume_type.upper()}:** ${pricing_data['ebs'][ebs_volume_type]:.3f}/GB/month")
-    if enable_ssm_patching:
-        st.write(f"**SSM Patch Mgmt:** ${pricing_data['ssm']['patch_manager']:.5f}/instance/hour")
-
-with col2:
-    st.markdown("#### 🎯 AWS License-Included Benefits")
-    
-    benefits = [
-        "✅ No core counting complexity",
-        "✅ No Client Access License (CAL) management", 
-        "✅ Automatic compliance handling",
-        "✅ Simplified billing and procurement",
-        "✅ AWS enterprise pricing passed through",
-        "✅ Regional pricing optimization",
-        "✅ No license mobility paperwork"
-    ]
-    
-    for benefit in benefits:
-        st.write(benefit)
-    
-    st.markdown("**📈 Pricing Advantages:**")
-    st.write("• Dynamic pricing reflects current AWS rates")
-    st.write("• Volume discounts already applied")
-    st.write("• No licensing true-up audits")
-
-# ROI Analysis (Updated)
-st.markdown("### 📈 Return on Investment Analysis")
-
-# Calculate ROI based on automation benefits (infrastructure focus)
-baseline_manual_cost = target_tco['total_tco']
-automation_infrastructure_savings = baseline_manual_cost * (metrics['cost_savings_percentage'] / 100)
-optimized_cost = baseline_manual_cost - automation_infrastructure_savings
-
-# Implementation cost for automation (remove hardcoded hourly rate)
-automation_implementation_hours = sum(comp['effort'] for comp in st.session_state.automation_components.values() if comp['enabled'])
+# ROI Analysis (Updated with workforce focus)
+st.markdown("### Return on Investment Analysis")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric("💰 Infrastructure Savings", f"${automation_infrastructure_savings:,.0f}")
-    st.metric("⚙️ Implementation Hours", f"{automation_implementation_hours:,}")
-    st.caption("Implementation cost depends on your hourly rates")
+    st.metric("Total Workforce Savings", f"${workforce_savings:,.0f}")
+    st.metric("Automation Maturity", f"{metrics['automation_maturity']:.0f}%")
+    st.caption(f"Potential workforce reduction: {metrics['workforce_reduction_potential']:.1f}%")
 
 with col2:
-    if automation_infrastructure_savings > 0:
-        roi_percentage = (automation_infrastructure_savings / baseline_manual_cost * 100)
-        st.metric("📊 Infrastructure ROI", f"{roi_percentage:.1f}%")
+    if workforce_savings > 0:
+        roi_percentage = (workforce_savings / target_tco['total_tco'] * 100)
+        st.metric("Workforce ROI", f"{roi_percentage:.1f}%")
         
-        # Payback in months (assuming savings are monthly)
-        monthly_savings = automation_infrastructure_savings / timeframe
-        st.metric("⏱️ Monthly Savings", f"${monthly_savings:,.0f}")
-    else:
-        st.metric("📊 Infrastructure ROI", "Enable automation components")
+        annual_savings = workforce_savings / (timeframe / 12)
+        st.metric("Annual Workforce Savings", f"${annual_savings:,.0f}")
 
 with col3:
-    if automation_infrastructure_savings > baseline_manual_cost * 0.15:
-        st.success("🎉 Excellent automation ROI potential")
-    elif automation_infrastructure_savings > baseline_manual_cost * 0.05:
-        st.info("✅ Good automation benefits")
-    elif automation_infrastructure_savings > 0:
-        st.warning("⚠️ Modest automation impact")
+    workforce_reduction_pct = ((sum(baseline_tco['skills_required'].values()) - sum(target_tco['skills_required'].values())) / sum(baseline_tco['skills_required'].values()) * 100) if sum(baseline_tco['skills_required'].values()) > 0 else 0
+    st.metric("Workforce Reduction", f"{workforce_reduction_pct:.0f}%")
+    
+    if workforce_reduction_pct > 25:
+        st.success("Significant workforce optimization achieved")
+    elif workforce_reduction_pct > 10:
+        st.info("Moderate workforce optimization")
     else:
-        st.error("❌ Enable automation components for ROI analysis")
+        st.warning("Limited workforce impact - consider additional automation")
 
-# Executive Summary & Recommendations (RESTORED)
-st.subheader("📊 Executive Summary & Recommendations")
+# Executive Summary & Recommendations
+st.subheader("Executive Summary & Recommendations")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("### 🎯 Current Maturity Assessment")
+    st.markdown("### Current Maturity Assessment")
     st.write(f"**Automation Maturity:** {metrics['automation_maturity']:.0f}% ({'Advanced' if metrics['automation_maturity'] >= 70 else 'Developing' if metrics['automation_maturity'] >= 40 else 'Initial'})")
     st.write(f"**ITIL Practice Coverage:** {metrics['itil_maturity']:.0f}% ({'Mature' if metrics['itil_maturity'] >= 70 else 'Developing'})")
     st.write(f"**Governance Framework:** {governance_maturity:.0f}% ({'Established' if governance_maturity >= 70 else 'Needs Development'})")
     st.write(f"**Total TCO:** ${target_tco['total_tco']:,.0f} over {timeframe} months")
 
 with col2:
-    st.markdown("### 🚀 Strategic Recommendations")
+    st.markdown("### Strategic Recommendations")
     
     recommendations = []
     
     if metrics['automation_maturity'] < 60:
-        recommendations.append("🔧 Prioritize automation components with high business impact")
+        recommendations.append("Prioritize automation components with high workforce reduction impact")
     
     if metrics['total_skill_gap'] > 3:
-        recommendations.append("👥 Develop comprehensive skills development program")
+        recommendations.append("Develop comprehensive skills development program")
     
     if metrics['itil_maturity'] < 70:
-        recommendations.append("📚 Establish ITIL 4 service management practices")
+        recommendations.append("Establish ITIL 4 service management practices")
     
     if governance_maturity < 70:
-        recommendations.append("🏛️ Implement enterprise governance framework")
+        recommendations.append("Implement enterprise governance framework")
     
-    if target_tco['infrastructure']['sql_licensing_monthly'] > target_tco['infrastructure']['ec2_compute_monthly']:
-        recommendations.append("Review SQL Server licensing strategy - licensing costs exceed compute infrastructure")
+    if workforce_pct > 60:
+        recommendations.append("Focus on workforce automation - labor costs dominate TCO")
     
     if not recommendations:
-        recommendations.append("✅ Continue execution of current strategy")
-        recommendations.append("📈 Focus on operational excellence and continuous improvement")
+        recommendations.append("Continue execution of current strategy")
+        recommendations.append("Focus on operational excellence and continuous improvement")
     
     for rec in recommendations:
         st.write(f"• {rec}")
 
-# Action items (RESTORED)
+# Action items
 st.markdown("---")
-st.markdown("### ✅ Immediate Action Items")
+st.markdown("### Immediate Action Items")
 
 action_items = []
 
 immediate_hires = [d for d in forecast_data[:3] if d['total_new_hires'] > 0]
 if immediate_hires:
-    action_items.append(f"🎯 Start recruitment for {immediate_hires[0]['total_new_hires']} positions in next 3 months")
+    action_items.append(f"Start recruitment for {immediate_hires[0]['total_new_hires']} positions in next 3 months")
 
 if metrics['automation_maturity'] < 50:
-    action_items.append("📚 Develop automation training program for existing team")
+    action_items.append("Develop automation training program for existing team")
 
 if current_clusters < 20 and target_clusters > 50:
-    action_items.append("🗗️ Begin infrastructure automation setup to support scaling")
+    action_items.append("Begin infrastructure automation setup to support scaling")
 
 if total_hires_needed > 5:
-    action_items.append("👥 Establish structured onboarding and mentorship program")
+    action_items.append("Establish structured onboarding and mentorship program")
 
-action_items.append("💰 Evaluate Reserved Instance pricing for long-term cost optimization")
-action_items.append("📈 Establish monthly cost monitoring and optimization reviews")
+action_items.append("Evaluate Reserved Instance pricing for long-term cost optimization")
+action_items.append("Establish monthly cost monitoring and optimization reviews")
+action_items.append("Configure dynamic parameters based on organizational standards")
 
 for i, item in enumerate(action_items, 1):
     st.write(f"{i}. {item}")
 
-# Certification Status (RESTORED)
+# Certification Status
 st.markdown("---")
-st.markdown("### 🏆 Enterprise Certification Status")
+st.markdown("### Enterprise Certification Status")
 
 if (metrics['automation_maturity'] >= 70 and 
     metrics['itil_maturity'] >= 70 and 
     governance_maturity >= 70):
-    st.success("🏆 **ENTERPRISE GRADE CERTIFIED** - This solution meets industry benchmark standards for enterprise SQL Server scaling")
+    st.success("**ENTERPRISE GRADE CERTIFIED** - This solution meets industry benchmark standards for enterprise SQL Server scaling")
 elif (metrics['automation_maturity'] >= 50):
-    st.warning("⚠️ **ENTERPRISE READY** - Solution has strong foundation, recommended improvements identified")
+    st.warning("**ENTERPRISE READY** - Solution has strong foundation, recommended improvements identified")
 else:
-    st.error("⛔ **DEVELOPMENT REQUIRED** - Significant gaps exist, not yet enterprise-grade")
+    st.error("**DEVELOPMENT REQUIRED** - Significant gaps exist, not yet enterprise-grade")
 
 # Configuration note
 st.markdown("---")
 st.markdown(f"""
-### 🔧 Configuration & Setup
+### Configuration & Setup
 
 **Current Status:**
-- **AWS Real-time Pricing:** {'✅ Available' if BOTO3_AVAILABLE else '❌ Unavailable (boto3 not installed)'}
+- **AWS Real-time Pricing:** {'Available' if BOTO3_AVAILABLE else 'Unavailable (boto3 not installed)'}
 - **Pricing Data Source:** {pricing_data['last_updated']}
+- **Dynamic Parameters:** All workforce ratios, salaries, and benchmarks are configurable
 
-#### Option 1: Enable Real-Time AWS Pricing (Recommended)
+#### Key Features:
+1. **Workforce-Centric Cost Model:** Automation primarily reduces labor costs, not infrastructure costs
+2. **Dynamic Configuration:** No hardcoded financial values - all parameters configurable via sidebar
+3. **Industry Benchmarks:** Customizable benchmark comparisons
+4. **Real-time Calculations:** All metrics update dynamically as parameters change
 
-1. **Install boto3:** 
-   ```bash
-   pip install boto3
-   ```
+#### To Enable Real-Time AWS Pricing:
+1. Install boto3: `pip install boto3`
+2. Add AWS credentials to Streamlit secrets
+3. Required permissions: `pricing:GetProducts`, `pricing:DescribeServices`
 
-2. **Add AWS credentials to Streamlit secrets:**
-   ```toml
-   [aws]
-   access_key_id = "your_aws_access_key"
-   secret_access_key = "your_aws_secret_key"
-   region = "us-east-1"
-   ```
-
-3. **Required AWS Permissions:**
-   - `pricing:GetProducts` (for real-time pricing)
-   - `pricing:DescribeServices` (for service information)
-
-#### Option 2: Use Fallback Pricing (Current Setup)
-The application works with representative pricing data when AWS integration is unavailable. Cost calculations remain accurate for planning purposes, though prices may not reflect current AWS rates.
-
-#### Additional Dependencies for Full Features:
-- `boto3` - AWS real-time pricing
-- `plotly` - Interactive visualizations  
+#### Dependencies:
+- `boto3` - AWS real-time pricing (optional)
+- `plotly` - Interactive visualizations
 - `pandas` - Data analysis
 - `numpy` - Numerical calculations
 """)
 
 # Footer
 st.markdown("---")
-st.markdown("*Enterprise SQL AlwaysOn AWS EC2 Scaling Planner v4.0 - Real-Time Pricing | Microsoft Licensing | TCO Analysis | ITIL 4 Aligned | Enterprise Governance Ready*")
+st.markdown("*Enterprise SQL AlwaysOn AWS EC2 Scaling Planner v5.0 - Workforce-Centric TCO | Dynamic Parameters | Real-Time Pricing | Enterprise Governance*")
