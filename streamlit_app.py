@@ -461,15 +461,51 @@ st.sidebar.header("Configuration Panel")
 # Configuration Parameters
 st.sidebar.subheader("Dynamic Parameters")
 with st.sidebar.expander("Workforce Ratios"):
-    st.session_state.config_params['dba_ratio'] = st.number_input("Clusters per DBA", min_value=5, max_value=50, value=st.session_state.config_params['dba_ratio'])
-    st.session_state.config_params['automation_ratio'] = st.number_input("Clusters per Automation Engineer", min_value=10, max_value=100, value=st.session_state.config_params['automation_ratio'])
-    st.session_state.config_params['itil_ratio'] = st.number_input("Clusters per ITIL Manager", min_value=20, max_value=200, value=st.session_state.config_params['itil_ratio'])
+    st.session_state.config_params['dba_ratio'] = st.number_input(
+        "Clusters per SQL Server DBA", 
+        min_value=15, max_value=50, 
+        value=st.session_state.config_params['dba_ratio'],
+        help="Practical range: 20-40 clusters per experienced DBA"
+    )
+    st.session_state.config_params['automation_ratio'] = st.number_input(
+        "Clusters per Infrastructure Automation Engineer", 
+        min_value=20, max_value=80, 
+        value=st.session_state.config_params['automation_ratio'],
+        help="Practical range: 30-60 clusters per automation engineer"
+    )
+    st.session_state.config_params['itil_ratio'] = st.number_input(
+        "Clusters per ITIL Service Manager", 
+        min_value=40, max_value=120, 
+        value=st.session_state.config_params['itil_ratio'],
+        help="Practical range: 50-100 clusters per service manager"
+    )
+    
+    st.markdown("#### Automation Constraints")
+    st.session_state.config_params['max_automation_maturity'] = st.slider(
+        "Maximum Realistic Automation Level (%)", 
+        50, 75, 
+        st.session_state.config_params['max_automation_maturity'], 
+        5,
+        help="65% is realistic maximum due to legacy constraints and human judgment requirements"
+    )
+    st.session_state.config_params['max_workforce_reduction'] = st.slider(
+        "Maximum Workforce Reduction at Full Automation (%)", 
+        40, 80, 
+        st.session_state.config_params['max_workforce_reduction'], 
+        5,
+        help="Total workforce reduction achievable with mature automation"
+    )
+    
+    st.caption("Note: 65% automation is realistic maximum due to legacy constraints")
 
-with st.sidebar.expander("Salary Parameters"):
-    st.session_state.config_params['dba_salary'] = st.number_input("DBA Annual Salary", min_value=50000, max_value=200000, value=st.session_state.config_params['dba_salary'], step=5000)
-    st.session_state.config_params['automation_salary'] = st.number_input("Automation Engineer Salary", min_value=60000, max_value=250000, value=st.session_state.config_params['automation_salary'], step=5000)
-    st.session_state.config_params['itil_salary'] = st.number_input("ITIL Manager Salary", min_value=50000, max_value=180000, value=st.session_state.config_params['itil_salary'], step=5000)
-    st.session_state.config_params['benefits_percentage'] = st.number_input("Benefits Percentage", min_value=20, max_value=60, value=st.session_state.config_params['benefits_percentage'])
+with st.sidebar.expander("Service Coverage"):
+    st.session_state.config_params['support_24x7_multiplier'] = st.number_input(
+        "24x7 Support Coverage Multiplier", 
+        min_value=1.2, max_value=2.0, 
+        value=st.session_state.config_params['support_24x7_multiplier'], 
+        step=0.1,
+        help="Additional staffing multiplier for continuous operations"
+    )
 
 # Deployment Type Selection
 st.sidebar.subheader("Architecture Configuration")
