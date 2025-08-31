@@ -30,144 +30,206 @@ st.markdown("""
     .main-header {
         font-size: 2.8rem;
         font-weight: 700;
-        color: #1e3a8a;
+        color: #1a365d;
         text-align: center;
         margin-bottom: 2rem;
-        font-family: 'Segoe UI', 'Arial', sans-serif;
+        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
         letter-spacing: -0.025em;
     }
     .enterprise-badge {
-        background: linear-gradient(135deg, #1e40af 0%, #3730a3 50%, #1e1b4b 100%);
+        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
         color: white;
         padding: 1rem 2rem;
-        border-radius: 8px;
-        font-size: 0.85rem;
-        font-weight: 600;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 500;
         text-align: center;
         margin: 2rem auto;
         max-width: 900px;
-        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
     }
     .executive-summary {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        border-left: 6px solid #1e40af;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border-left: 4px solid #4299e1;
         padding: 2rem;
         margin: 2rem 0;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
     }
-    .cost-summary {
-        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-        color: white;
+    .infrastructure-summary {
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        color: #2d3748;
         padding: 2rem;
-        border-radius: 8px;
+        border-radius: 12px;
         text-align: center;
         margin: 1.5rem 0;
-        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid #cbd5e0;
     }
-    .savings-highlight {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        color: white;
+    .workforce-highlight {
+        background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+        color: #2d3748;
         padding: 2rem;
-        border-radius: 8px;
+        border-radius: 12px;
         text-align: center;
         margin: 1.5rem 0;
-        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid #9ae6b4;
     }
     .governance-framework {
-        background-color: #fefce8;
-        border-left: 6px solid #ca8a04;
+        background-color: #fffaf0;
+        border-left: 4px solid #ed8936;
         padding: 2rem;
         margin: 2rem 0;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        border: 1px solid #fed7aa;
     }
     .operational-metrics {
-        background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 8px;
+        background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+        color: #2a4365;
+        padding: 1.5rem;
+        border-radius: 12px;
         text-align: center;
-        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #90cdf4;
+        margin: 0.5rem 0;
     }
-    .risk-critical {
-        background-color: #fef2f2;
-        border-left: 6px solid #dc2626;
-        padding: 1.5rem;
+    .status-excellent {
+        background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+        border-left: 4px solid #38a169;
+        padding: 1rem 1.5rem;
+        margin: 0.5rem 0;
+        border-radius: 8px;
+        color: #22543d;
+        border: 1px solid #9ae6b4;
+    }
+    .status-good {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef5e7 100%);
+        border-left: 4px solid #ed8936;
+        padding: 1rem 1.5rem;
+        margin: 0.5rem 0;
+        border-radius: 8px;
+        color: #744210;
+        border: 1px solid #fed7aa;
+    }
+    .status-needs-improvement {
+        background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+        border-left: 4px solid #e53e3e;
+        padding: 1rem 1.5rem;
+        margin: 0.5rem 0;
+        border-radius: 8px;
+        color: #742a2a;
+        border: 1px solid #fc8181;
+    }
+    .alert-info {
+        background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+        border-left: 4px solid #3182ce;
+        padding: 1rem 1.5rem;
         margin: 1rem 0;
         border-radius: 8px;
+        color: #2a4365;
+        border: 1px solid #90cdf4;
     }
-    .risk-high {
-        background-color: #fefbeb;
-        border-left: 6px solid #f59e0b;
-        padding: 1.5rem;
+    .alert-warning {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef5e7 100%);
+        border-left: 4px solid #ed8936;
+        padding: 1rem 1.5rem;
         margin: 1rem 0;
         border-radius: 8px;
+        color: #744210;
+        border: 1px solid #fed7aa;
     }
-    .risk-medium {
-        background-color: #f0fdf4;
-        border-left: 6px solid #10b981;
-        padding: 1.5rem;
+    .alert-success {
+        background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+        border-left: 4px solid #38a169;
+        padding: 1rem 1.5rem;
         margin: 1rem 0;
         border-radius: 8px;
-    }
-    .benchmark-excellent {
-        background-color: #f0fdf4;
-        border-left: 6px solid #16a34a;
-        padding: 1rem;
-        margin: 0.5rem 0;
-        border-radius: 6px;
-    }
-    .benchmark-good {
-        background-color: #fefbeb;
-        border-left: 6px solid #d97706;
-        padding: 1rem;
-        margin: 0.5rem 0;
-        border-radius: 6px;
-    }
-    .benchmark-needs-improvement {
-        background-color: #fef2f2;
-        border-left: 6px solid #dc2626;
-        padding: 1rem;
-        margin: 0.5rem 0;
-        border-radius: 6px;
+        color: #22543d;
+        border: 1px solid #9ae6b4;
     }
     .licensing-framework {
-        background-color: #f8fafc;
-        border: 2px solid #e2e8f0;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border: 1px solid #cbd5e0;
         padding: 2rem;
-        border-radius: 8px;
+        border-radius: 12px;
         margin: 1.5rem 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     }
     .section-header {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         font-weight: 600;
-        color: #1e3a8a;
-        margin: 2rem 0 1rem 0;
-        border-bottom: 2px solid #e5e7eb;
-        padding-bottom: 0.5rem;
+        color: #2d3748;
+        margin: 3rem 0 1.5rem 0;
+        border-bottom: 2px solid #cbd5e0;
+        padding-bottom: 1rem;
+        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     .subsection-header {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         font-weight: 600;
-        color: #374151;
-        margin: 1.5rem 0 1rem 0;
+        color: #4a5568;
+        margin: 2rem 0 1rem 0;
+        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     .metric-card {
         background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
         padding: 1.5rem;
         margin: 0.5rem 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
     .data-table {
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
         overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    .stMetric {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+    }
+    .stMetric > div {
+        color: #2d3748 !important;
+    }
+    .stMetric label {
+        color: #4a5568 !important;
+        font-weight: 500 !important;
+    }
+    /* Streamlit component styling */
+    .stSelectbox > div > div {
+        border-radius: 8px;
+        border: 1px solid #cbd5e0;
+    }
+    .stNumberInput > div > div > input {
+        border-radius: 8px;
+        border: 1px solid #cbd5e0;
+    }
+    .stSlider > div > div > div {
+        color: #4299e1;
+    }
+    /* Clean up default streamlit styling */
+    .stApp {
+        background-color: #f8fafc;
+    }
+    .stSidebar {
+        background-color: white;
+    }
+    .stExpander {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+    }
+    h1, h2, h3, h4 {
+        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #2d3748;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -864,7 +926,7 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.markdown(f"""
-    <div class="cost-summary">
+    <div class="infrastructure-summary">
         <h3>Infrastructure Cost Analysis</h3>
         <h2>${target_tco['total_infrastructure_cost']:,.0f}</h2>
         <p>{timeframe}-month infrastructure projection</p>
@@ -880,7 +942,7 @@ with col2:
     fte_reduction = baseline_tco['workforce_requirements']['total_fte'] - target_tco['workforce_requirements']['total_fte']
     
     st.markdown(f"""
-    <div class="savings-highlight">
+    <div class="workforce-highlight">
         <h3>Workforce Optimization Analysis</h3>
         <h2>{target_tco['workforce_requirements']['total_fte']} FTE</h2>
         <p>Required workforce with {metrics['automation_maturity']:.0f}% automation</p>
@@ -1034,14 +1096,14 @@ with col2:
         st.metric("Workforce Readiness", f"{skills_readiness:.0f}%")
         
         if skills_readiness >= 90:
-            st.success("Workforce adequately prepared")
+            st.markdown('<div class="alert-success">Workforce adequately prepared</div>', unsafe_allow_html=True)
         elif skills_readiness >= 70:
-            st.warning("Minor resource gaps identified")
+            st.markdown('<div class="alert-warning">Minor resource gaps identified</div>', unsafe_allow_html=True)
         else:
-            st.error("Significant resource shortfalls")
+            st.markdown('<div class="alert-info">Significant resource shortfalls</div>', unsafe_allow_html=True)
     
     if metrics['automation_maturity'] > 30:
-        st.info(f"Automation framework reduces staffing requirements by approximately {metrics['workforce_reduction_potential']:.0f}%")
+        st.markdown(f'<div class="alert-info">Automation framework reduces staffing requirements by approximately {metrics["workforce_reduction_potential"]:.0f}%</div>', unsafe_allow_html=True)
 
 # Monthly Forecasting System
 st.markdown("---")
@@ -1177,14 +1239,14 @@ with col2:
     
     urgent_months = [d for d in forecast_data if d['total_new_hires'] > 2]
     if urgent_months:
-        st.warning(f"High-intensity hiring periods: {len(urgent_months)} months require 3+ new hires")
+        st.markdown(f'<div class="alert-warning">High-intensity hiring periods: {len(urgent_months)} months require 3+ new hires</div>', unsafe_allow_html=True)
     
     if total_hires_needed > 8:
-        st.error("Consider phased implementation approach due to high hiring volume")
+        st.markdown('<div class="alert-info">Consider phased implementation approach due to high hiring volume</div>', unsafe_allow_html=True)
     elif total_hires_needed > 4:
-        st.warning("Moderate hiring requirements - strategic recruitment planning needed")
+        st.markdown('<div class="alert-warning">Moderate hiring requirements - strategic recruitment planning needed</div>', unsafe_allow_html=True)
     else:
-        st.success("Manageable hiring requirements within normal recruitment capacity")
+        st.markdown('<div class="alert-success">Manageable hiring requirements within normal recruitment capacity</div>', unsafe_allow_html=True)
 
 # Detailed monthly breakdown
 st.markdown('<div class="subsection-header">Monthly Implementation Roadmap</div>', unsafe_allow_html=True)
@@ -1342,23 +1404,23 @@ for metric_name, scores in benchmark_scores.items():
     
     if lower_is_better:
         if scores['our_score'] <= scores['industry_leader']:
-            benchmark_class = "benchmark-excellent"
+            benchmark_class = "status-excellent"
             status = "INDUSTRY LEADING"
         elif scores['our_score'] <= scores['industry_avg']:
-            benchmark_class = "benchmark-good"
+            benchmark_class = "status-good"
             status = "ABOVE AVERAGE"
         else:
-            benchmark_class = "benchmark-needs-improvement"
+            benchmark_class = "status-needs-improvement"
             status = "IMPROVEMENT REQUIRED"
     else:
         if scores['our_score'] >= scores['industry_leader']:
-            benchmark_class = "benchmark-excellent"
+            benchmark_class = "status-excellent"
             status = "INDUSTRY LEADING"
         elif scores['our_score'] >= scores['industry_avg']:
-            benchmark_class = "benchmark-good"
+            benchmark_class = "status-good"
             status = "ABOVE AVERAGE"
         else:
-            benchmark_class = "benchmark-needs-improvement"
+            benchmark_class = "status-needs-improvement"
             status = "IMPROVEMENT REQUIRED"
     
     st.markdown(f"""
@@ -1741,11 +1803,11 @@ st.markdown("### Enterprise Readiness Assessment")
 if (metrics['automation_maturity'] >= 70 and 
     metrics['itil_maturity'] >= 70 and 
     governance_maturity >= 70):
-    st.success("**ENTERPRISE GRADE CERTIFIED** - This solution meets industry benchmark standards for enterprise SQL Server scaling")
+    st.markdown('<div class="alert-success"><strong>ENTERPRISE GRADE CERTIFIED</strong> - This solution meets industry benchmark standards for enterprise SQL Server scaling</div>', unsafe_allow_html=True)
 elif (metrics['automation_maturity'] >= 50):
-    st.warning("**ENTERPRISE READY** - Solution has strong foundation, recommended improvements identified")
+    st.markdown('<div class="alert-warning"><strong>ENTERPRISE READY</strong> - Solution has strong foundation, recommended improvements identified</div>', unsafe_allow_html=True)
 else:
-    st.error("**DEVELOPMENT REQUIRED** - Significant gaps exist, not yet enterprise-grade")
+    st.markdown('<div class="alert-info"><strong>DEVELOPMENT REQUIRED</strong> - Significant gaps exist, not yet enterprise-grade</div>', unsafe_allow_html=True)
 
 # Final validation note
 st.markdown("---")
