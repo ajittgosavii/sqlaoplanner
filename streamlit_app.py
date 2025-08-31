@@ -285,27 +285,35 @@ pricing_data = get_aws_pricing()
 
 # Initialize comprehensive enterprise state
 def initialize_enterprise_state():
-    # Dynamic Configuration Parameters
+    # Dynamic Configuration Parameters with defensive initialization
     if 'config_params' not in st.session_state:
-        st.session_state.config_params = {
-            # Workforce parameters (practical enterprise ratios)
-            'dba_ratio': 25,  # clusters per DBA (realistic for enterprise)
-            'automation_ratio': 35,  # clusters per automation engineer
-            'itil_ratio': 60,  # clusters per ITIL manager
-            'max_automation_maturity': 65,  # realistic max automation level
-            'max_workforce_reduction': 65,  # max workforce reduction at full automation
-            'support_24x7_multiplier': 1.4,
-            
-            # Benchmarks
-            'benchmark_availability_avg': 99.5,
-            'benchmark_availability_leader': 99.99,
-            'benchmark_automation_avg': 45,
-            'benchmark_automation_leader': 85,
-            'benchmark_itil_avg': 60,
-            'benchmark_itil_leader': 90,
-            'benchmark_rto_avg': 240,
-            'benchmark_rto_leader': 60
-        }
+        st.session_state.config_params = {}
+    
+    # Ensure all required keys exist with defaults
+    default_config = {
+        # Workforce parameters (practical enterprise ratios)
+        'dba_ratio': 25,  # clusters per DBA (realistic for enterprise)
+        'automation_ratio': 35,  # clusters per automation engineer
+        'itil_ratio': 60,  # clusters per ITIL manager
+        'max_automation_maturity': 65,  # realistic max automation level
+        'max_workforce_reduction': 65,  # max workforce reduction at full automation
+        'support_24x7_multiplier': 1.4,
+        
+        # Benchmarks
+        'benchmark_availability_avg': 99.5,
+        'benchmark_availability_leader': 99.99,
+        'benchmark_automation_avg': 45,
+        'benchmark_automation_leader': 85,
+        'benchmark_itil_avg': 60,
+        'benchmark_itil_leader': 90,
+        'benchmark_rto_avg': 240,
+        'benchmark_rto_leader': 60
+    }
+    
+    # Initialize missing keys
+    for key, default_value in default_config.items():
+        if key not in st.session_state.config_params:
+            st.session_state.config_params[key] = default_value
     
     if 'current_skills' not in st.session_state:
         st.session_state.current_skills = {
