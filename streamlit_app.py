@@ -195,12 +195,61 @@ def get_aws_pricing():
         
         pricing_client = session.client('pricing', region_name='us-east-1')
         
-        # Real-time pricing logic would go here...
-        # For now, return the updated fallback data
-        return get_aws_pricing()
+        # For now, return the fallback data with updated pricing
+        # Real-time pricing implementation would go here if needed
+        return {
+            'ec2_windows': {
+                'm5.xlarge': 0.456, 'm5.2xlarge': 0.912, 'm5.4xlarge': 1.824, 'm5.8xlarge': 3.648,
+                'm5.12xlarge': 5.472, 'm5.16xlarge': 7.296, 'r5.xlarge': 0.584, 'r5.2xlarge': 1.168,
+                'r5.4xlarge': 2.336, 'r5.8xlarge': 4.672, 'r5.12xlarge': 7.008, 'r5.16xlarge': 9.344
+            },
+            'ec2_sql_web': {
+                'm5.xlarge': 0.504, 'm5.2xlarge': 1.008, 'm5.4xlarge': 2.016, 'm5.8xlarge': 4.032,
+                'm5.12xlarge': 6.048, 'm5.16xlarge': 8.064, 'r5.xlarge': 0.632, 'r5.2xlarge': 1.264,
+                'r5.4xlarge': 2.528, 'r5.8xlarge': 5.056, 'r5.12xlarge': 7.584, 'r5.16xlarge': 10.112
+            },
+            'ec2_sql_standard': {
+                'm5.xlarge': 0.832, 'm5.2xlarge': 1.664, 'm5.4xlarge': 3.328, 'm5.8xlarge': 6.656,
+                'm5.12xlarge': 9.984, 'm5.16xlarge': 13.312, 'r5.xlarge': 1.096, 'r5.2xlarge': 2.192,
+                'r5.4xlarge': 4.384, 'r5.8xlarge': 8.768, 'r5.12xlarge': 13.152, 'r5.16xlarge': 17.536
+            },
+            'ec2_sql_enterprise': {
+                'm5.xlarge': 1.456, 'm5.2xlarge': 2.912, 'm5.4xlarge': 5.824, 'm5.8xlarge': 11.648,
+                'm5.12xlarge': 17.472, 'm5.16xlarge': 23.296, 'r5.xlarge': 1.728, 'r5.2xlarge': 3.456,
+                'r5.4xlarge': 6.912, 'r5.8xlarge': 13.824, 'r5.12xlarge': 20.736, 'r5.16xlarge': 27.648
+            },
+            'ebs': {'gp3': 0.08, 'gp2': 0.096, 'io2': 0.125, 'io1': 0.125},
+            'ssm': {'patch_manager': 0.00972},
+            'last_updated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
         
     except Exception as e:
-        return get_aws_pricing()
+        # Return fallback data instead of recursive call
+        return {
+            'ec2_windows': {
+                'm5.xlarge': 0.456, 'm5.2xlarge': 0.912, 'm5.4xlarge': 1.824, 'm5.8xlarge': 3.648,
+                'm5.12xlarge': 5.472, 'm5.16xlarge': 7.296, 'r5.xlarge': 0.584, 'r5.2xlarge': 1.168,
+                'r5.4xlarge': 2.336, 'r5.8xlarge': 4.672, 'r5.12xlarge': 7.008, 'r5.16xlarge': 9.344
+            },
+            'ec2_sql_web': {
+                'm5.xlarge': 0.504, 'm5.2xlarge': 1.008, 'm5.4xlarge': 2.016, 'm5.8xlarge': 4.032,
+                'm5.12xlarge': 6.048, 'm5.16xlarge': 8.064, 'r5.xlarge': 0.632, 'r5.2xlarge': 1.264,
+                'r5.4xlarge': 2.528, 'r5.8xlarge': 5.056, 'r5.12xlarge': 7.584, 'r5.16xlarge': 10.112
+            },
+            'ec2_sql_standard': {
+                'm5.xlarge': 0.832, 'm5.2xlarge': 1.664, 'm5.4xlarge': 3.328, 'm5.8xlarge': 6.656,
+                'm5.12xlarge': 9.984, 'm5.16xlarge': 13.312, 'r5.xlarge': 1.096, 'r5.2xlarge': 2.192,
+                'r5.4xlarge': 4.384, 'r5.8xlarge': 8.768, 'r5.12xlarge': 13.152, 'r5.16xlarge': 17.536
+            },
+            'ec2_sql_enterprise': {
+                'm5.xlarge': 1.456, 'm5.2xlarge': 2.912, 'm5.4xlarge': 5.824, 'm5.8xlarge': 11.648,
+                'm5.12xlarge': 17.472, 'm5.16xlarge': 23.296, 'r5.xlarge': 1.728, 'r5.2xlarge': 3.456,
+                'r5.4xlarge': 6.912, 'r5.8xlarge': 13.824, 'r5.12xlarge': 20.736, 'r5.16xlarge': 27.648
+            },
+            'ebs': {'gp3': 0.08, 'gp2': 0.096, 'io2': 0.125, 'io1': 0.125},
+            'ssm': {'patch_manager': 0.00972},
+            'last_updated': f'Fallback Data (Exception: {str(e)})'
+        }
 
 # Load AWS pricing
 pricing_data = get_aws_pricing()
