@@ -522,8 +522,9 @@ current_memory_gb = st.sidebar.number_input(
 )
 current_storage_tb = st.sidebar.number_input(
     "Storage (TB) per Instance", 
-    min_value=0.5, max_value=100, 
-    value=3,  # Reduced from 10
+    min_value=0.5, max_value=100.0, 
+    value=3.0,  # Reduced from 10
+    step=0.5,
     help="Typical enterprise database size: 1-10 TB"
 )
 
