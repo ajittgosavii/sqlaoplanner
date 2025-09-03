@@ -18,7 +18,7 @@ except ImportError:
 
 # Page configuration
 st.set_page_config(
-    page_title="Enterprise SQL Server Scaling Platform | Strategic Planning & TCO Analysis",
+    page_title="Enterprise SQL Server Scaling Platform v7.0 | BYOL & Datadog Edition",
     page_icon="🏢",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -32,9 +32,22 @@ st.markdown("""
         font-weight: 700;
         color: #1a365d;
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
         font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
         letter-spacing: -0.025em;
+    }
+    .version-badge {
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-align: center;
+        margin: 1rem auto;
+        max-width: 400px;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        border: 1px solid #dc2626;
     }
     .enterprise-badge {
         background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
@@ -134,11 +147,18 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Corporate header and branding
+# Corporate header and branding with prominent version
 st.markdown('<h1 class="main-header">Enterprise SQL Server Infrastructure Planning Platform</h1>', unsafe_allow_html=True)
+
+st.markdown('''
+<div class="version-badge">
+v7.0 - BYOL & Datadog Edition | Updated 2025
+</div>
+''', unsafe_allow_html=True)
+
 st.markdown('''
 <div class="enterprise-badge">
-Workforce-Centric Analysis | Practical Automation Limits | Infrastructure Cost Modeling | Service Management Framework
+New Features: BYOL Support | Datadog Monitoring ($1K/instance/year) | Enhanced Cost Analysis | Practical Automation Limits | Infrastructure Cost Modeling | Service Management Framework
 </div>
 ''', unsafe_allow_html=True)
 
@@ -179,7 +199,8 @@ def get_aws_pricing():
             },
             'ebs': {'gp3': 0.08, 'gp2': 0.096, 'io2': 0.125, 'io1': 0.125},  # Updated EBS pricing
             'ssm': {'patch_manager': 0.00972},
-            'last_updated': 'Updated Practical 2025 Pricing Data'
+            'datadog': {'annual_per_instance': 1000},  # NEW: Datadog pricing
+            'last_updated': 'Updated Practical 2025 Pricing Data with BYOL & Datadog Support'
         }
     
     # If boto3 available, use real-time pricing (keeping original logic)
@@ -220,6 +241,7 @@ def get_aws_pricing():
             },
             'ebs': {'gp3': 0.08, 'gp2': 0.096, 'io2': 0.125, 'io1': 0.125},
             'ssm': {'patch_manager': 0.00972},
+            'datadog': {'annual_per_instance': 1000},
             'last_updated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         
@@ -248,6 +270,7 @@ def get_aws_pricing():
             },
             'ebs': {'gp3': 0.08, 'gp2': 0.096, 'io2': 0.125, 'io1': 0.125},
             'ssm': {'patch_manager': 0.00972},
+            'datadog': {'annual_per_instance': 1000},
             'last_updated': f'Fallback Data (Exception: {str(e)})'
         }
 
@@ -427,7 +450,8 @@ if 'automation_components' not in st.session_state:
     }
 
 # Sidebar configuration with updated parameters
-st.sidebar.header("Configuration Panel")
+st.sidebar.header("Configuration Panel v7.0")
+st.sidebar.markdown("**NEW: BYOL & Datadog Support**")
 
 st.sidebar.subheader("Dynamic Parameters")
 with st.sidebar.expander("Workforce Ratios"):
@@ -533,12 +557,22 @@ if deployment_type == "AlwaysOn Cluster":
 else:
     ec2_per_cluster = 1
 
-# SQL Server Edition
+# NEW: SQL Server Licensing Configuration
+st.sidebar.subheader("🆕 SQL Server Licensing")
+licensing_model = st.sidebar.radio(
+    "Licensing Model",
+    ["License-Included", "BYOL (Bring Your Own License)"],
+    help="NEW: Choose between AWS License-Included or bring your own SQL Server licenses"
+)
+
 sql_edition = st.sidebar.selectbox(
     "SQL Server Edition",
     ["Standard", "Enterprise", "Web"],
     help="Select SQL Server edition for licensing and cost calculations"
 )
+
+if licensing_model == "BYOL (Bring Your Own License)":
+    st.sidebar.info("💡 BYOL: You provide SQL Server licenses, pay only for Windows compute")
 
 # EBS Configuration
 st.sidebar.subheader("Storage Configuration")
@@ -554,6 +588,19 @@ enable_ssm_patching = st.sidebar.checkbox(
     value=True,
     help="Enable automated patching with AWS Systems Manager for operational efficiency"
 )
+
+# NEW: Datadog Monitoring Configuration
+st.sidebar.subheader("🆕 Monitoring & Observability")
+enable_datadog = st.sidebar.checkbox(
+    "Datadog Monitoring Platform",
+    value=False,
+    help="NEW: Enable Datadog monitoring and observability ($1,000/instance/year)"
+)
+
+if enable_datadog:
+    st.sidebar.success("📊 Datadog: Comprehensive monitoring, APM, logs, synthetic monitoring enabled")
+else:
+    st.sidebar.info("Basic AWS CloudWatch monitoring (included)")
 
 # Target State Configuration
 st.sidebar.subheader("Target State Planning")
@@ -636,23 +683,32 @@ def calculate_skills_requirements(clusters, automation_level, support_24x7):
     
     return adjusted_requirements
 
-# Cost calculation functions with updated data transfer costs
-def calculate_infrastructure_costs(clusters, instance_type, instances_per_cluster, storage_tb, ebs_type, enable_patching, sql_edition):
-    """Calculate comprehensive infrastructure costs with realistic data transfer estimates"""
+# ENHANCED: Cost calculation functions with BYOL and Datadog support
+def calculate_infrastructure_costs(clusters, instance_type, instances_per_cluster, storage_tb, ebs_type, enable_patching, sql_edition, licensing_model, enable_datadog):
+    """Calculate comprehensive infrastructure costs with BYOL and Datadog support"""
     
     windows_rate = pricing_data['ec2_windows'].get(instance_type, 0.456)
     
-    edition_key_map = {
-        "Web": "ec2_sql_web",
-        "Standard": "ec2_sql_standard", 
-        "Enterprise": "ec2_sql_enterprise"
-    }
-    edition_key = edition_key_map.get(sql_edition, "ec2_sql_standard")
-    sql_windows_rate = pricing_data[edition_key].get(instance_type, windows_rate * 2)
+    # NEW: Calculate SQL Server costs based on licensing model
+    if licensing_model == "BYOL (Bring Your Own License)":
+        # BYOL: Only pay for Windows compute, customer provides SQL licenses
+        hourly_rate = windows_rate
+        licensing_component = 0
+    else:
+        # License-Included: Pay for SQL Server + Windows
+        edition_key_map = {
+            "Web": "ec2_sql_web",
+            "Standard": "ec2_sql_standard", 
+            "Enterprise": "ec2_sql_enterprise"
+        }
+        edition_key = edition_key_map.get(sql_edition, "ec2_sql_standard")
+        sql_rate = pricing_data[edition_key].get(instance_type, windows_rate * 2)
+        hourly_rate = sql_rate
+        licensing_component = sql_rate - windows_rate
     
     total_instances = clusters * instances_per_cluster
     
-    monthly_ec2_cost = sql_windows_rate * 24 * 30 * total_instances
+    monthly_ec2_cost = hourly_rate * 24 * 30 * total_instances
     
     ebs_rate_per_gb = pricing_data['ebs'][ebs_type]
     storage_gb = storage_tb * 1024
@@ -663,21 +719,27 @@ def calculate_infrastructure_costs(clusters, instance_type, instances_per_cluste
         ssm_hourly_rate = pricing_data['ssm']['patch_manager']
         monthly_ssm_cost = ssm_hourly_rate * 24 * 30 * total_instances
     
+    # NEW: Datadog monitoring cost ($1000/instance/year = $83.33/instance/month)
+    monthly_datadog_cost = 0
+    if enable_datadog:
+        annual_datadog_per_instance = pricing_data['datadog']['annual_per_instance']
+        monthly_datadog_cost = (annual_datadog_per_instance / 12) * total_instances
+    
     # More realistic data transfer costs (reduced)
     base_transfer_cost = 20 if deployment_type == "AlwaysOn Cluster" else 8  # Reduced from 25/10
     monthly_data_transfer = clusters * base_transfer_cost
     
-    licensing_hourly_rate = sql_windows_rate - windows_rate
-    monthly_licensing_cost = licensing_hourly_rate * 24 * 30 * total_instances
-    
     return {
         'ec2_compute_monthly': (windows_rate * 24 * 30 * total_instances),
-        'sql_licensing_monthly': monthly_licensing_cost,
+        'sql_licensing_monthly': licensing_component * 24 * 30 * total_instances if licensing_model != "BYOL (Bring Your Own License)" else 0,
         'ebs_monthly': monthly_ebs_cost,
         'ssm_monthly': monthly_ssm_cost,
+        'datadog_monthly': monthly_datadog_cost,  # NEW
         'data_transfer_monthly': monthly_data_transfer,
-        'total_monthly': monthly_ec2_cost + monthly_ebs_cost + monthly_ssm_cost + monthly_data_transfer,
-        'total_instances': total_instances
+        'total_monthly': monthly_ec2_cost + monthly_ebs_cost + monthly_ssm_cost + monthly_datadog_cost + monthly_data_transfer,
+        'total_instances': total_instances,
+        'licensing_model': licensing_model,  # NEW
+        'sql_edition': sql_edition  # NEW
     }
 
 def calculate_workforce_requirements(skills_requirements):
@@ -691,12 +753,12 @@ def calculate_workforce_requirements(skills_requirements):
     }
 
 def calculate_total_cost_of_ownership(clusters, automation_level, timeframe_months):
-    """Calculate infrastructure TCO and workforce FTE requirements"""
+    """Calculate infrastructure TCO and workforce FTE requirements with BYOL and Datadog support"""
     
     # Infrastructure costs (infrastructure only - no workforce costs)
     infra_costs = calculate_infrastructure_costs(
         clusters, instance_type, ec2_per_cluster, current_storage_tb, 
-        ebs_volume_type, enable_ssm_patching, sql_edition
+        ebs_volume_type, enable_ssm_patching, sql_edition, licensing_model, enable_datadog
     )
     
     # Workforce requirements (FTE counts, not costs)
@@ -706,18 +768,30 @@ def calculate_total_cost_of_ownership(clusters, automation_level, timeframe_mont
     # Total infrastructure cost over timeframe
     total_infrastructure_cost = infra_costs['total_monthly'] * timeframe_months
     
+    # NEW: Enhanced TCO breakdown with BYOL and Datadog support
+    tco_breakdown = {
+        'EC2 Compute': infra_costs['ec2_compute_monthly'] * timeframe_months,
+        'EBS Storage': infra_costs['ebs_monthly'] * timeframe_months,
+        'SSM Patching': infra_costs['ssm_monthly'] * timeframe_months,
+        'Data Transfer': infra_costs['data_transfer_monthly'] * timeframe_months,
+    }
+    
+    # Add appropriate licensing cost based on model
+    if licensing_model == "BYOL (Bring Your Own License)":
+        tco_breakdown['BYOL Licensing'] = 0  # Customer provides licenses
+    else:
+        tco_breakdown['SQL Licensing (AWS)'] = infra_costs['sql_licensing_monthly'] * timeframe_months
+    
+    # Add Datadog if enabled
+    if enable_datadog:
+        tco_breakdown['Datadog Monitoring'] = infra_costs['datadog_monthly'] * timeframe_months
+    
     return {
         'infrastructure': infra_costs,
         'workforce_requirements': workforce_requirements,
         'skills_required': skills_needed,
         'total_infrastructure_cost': total_infrastructure_cost,
-        'tco_breakdown': {
-            'EC2 Compute': infra_costs['ec2_compute_monthly'] * timeframe_months,
-            'SQL Licensing (AWS)': infra_costs['sql_licensing_monthly'] * timeframe_months,
-            'EBS Storage': infra_costs['ebs_monthly'] * timeframe_months,
-            'SSM Patching': infra_costs['ssm_monthly'] * timeframe_months,
-            'Data Transfer': infra_costs['data_transfer_monthly'] * timeframe_months,
-        }
+        'tco_breakdown': tco_breakdown
     }
 
 # Calculate comprehensive enterprise metrics
@@ -818,12 +892,15 @@ current_tco = calculate_total_cost_of_ownership(current_clusters, metrics['autom
 target_tco = calculate_total_cost_of_ownership(target_clusters, metrics['automation_maturity'], timeframe)
 
 # Executive Dashboard with Cost Metrics
-st.markdown('<div class="section-header">Executive Dashboard & Financial Analysis</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header">Executive Dashboard & Financial Analysis (v7.0)</div>', unsafe_allow_html=True)
 
-# Cost summary section
+# Cost summary section with NEW features highlighted
 col1, col2 = st.columns(2)
 
 with col1:
+    licensing_badge = "🆕 BYOL" if licensing_model == "BYOL (Bring Your Own License)" else "License-Included"
+    datadog_badge = "📊 Datadog Enabled" if enable_datadog else ""
+    
     st.markdown(f"""
     <div class="infrastructure-summary">
         <h3>Infrastructure Cost Analysis</h3>
@@ -831,6 +908,7 @@ with col1:
         <p>{timeframe}-month infrastructure projection</p>
         <p>{target_clusters} {deployment_type.lower()}s | {target_tco['infrastructure']['total_instances']} instances</p>
         <p>Monthly Infrastructure: ${target_tco['infrastructure']['total_monthly']:,.0f}</p>
+        <p><strong>{licensing_badge}</strong> {datadog_badge}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -884,17 +962,107 @@ with col5:
 with col6:
     st.metric("Total Compute Instances", f"{metrics['target_ec2_instances']}")
 
+# NEW: Licensing & Monitoring Cost Analysis Section
+st.markdown('<div class="section-header">🆕 Licensing & Monitoring Cost Analysis</div>', unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown(f"""
+    <div class="executive-summary">
+        <h4>SQL Server Licensing Analysis</h4>
+        <p><strong>Model:</strong> {licensing_model}</p>
+        <p><strong>Edition:</strong> SQL Server {sql_edition}</p>
+        <p><strong>Total Instances:</strong> {target_tco['infrastructure']['total_instances']}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if licensing_model == "BYOL (Bring Your Own License)":
+        st.metric("AWS Licensing Cost", "$0 (BYOL)")
+        # Estimate external BYOL costs
+        if sql_edition == "Enterprise":
+            est_annual_per_core = 14256
+        elif sql_edition == "Standard":
+            est_annual_per_core = 3717
+        else:
+            est_annual_per_core = 1435
+        
+        est_cores = 4  # Assume 4 cores per instance
+        est_total_annual = est_annual_per_core * est_cores * target_tco['infrastructure']['total_instances']
+        st.caption(f"Est. External BYOL Cost: ${est_total_annual:,.0f}/year")
+    else:
+        monthly_licensing = target_tco['infrastructure']['sql_licensing_monthly']
+        st.metric("Monthly AWS Licensing", f"${monthly_licensing:,.0f}")
+        st.metric("Annual AWS Licensing", f"${monthly_licensing * 12:,.0f}")
+
+with col2:
+    if enable_datadog:
+        monthly_datadog = target_tco['infrastructure']['datadog_monthly']
+        annual_datadog = monthly_datadog * 12
+        st.markdown(f"""
+        <div class="executive-summary">
+            <h4>Datadog Monitoring Platform</h4>
+            <p><strong>Platform:</strong> Comprehensive Observability</p>
+            <p><strong>Rate:</strong> $1,000/instance/year</p>
+            <p><strong>Coverage:</strong> {target_tco['infrastructure']['total_instances']} instances</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.metric("Monthly Datadog", f"${monthly_datadog:,.0f}")
+        st.metric("Annual Datadog", f"${annual_datadog:,.0f}")
+        st.success("📊 Includes: Infrastructure monitoring, APM, log analytics, synthetic monitoring, custom dashboards")
+    else:
+        st.markdown(f"""
+        <div class="executive-summary">
+            <h4>Monitoring Status</h4>
+            <p><strong>Platform:</strong> Basic AWS CloudWatch</p>
+            <p><strong>Cost:</strong> Included in EC2 pricing</p>
+            <p><strong>Note:</strong> Datadog not enabled</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.info("💡 Enable Datadog for comprehensive monitoring, APM, log analytics, and custom dashboards")
+
+with col3:
+    # Total optional costs summary
+    optional_monthly = 0
+    optional_components = []
+    
+    if licensing_model != "BYOL (Bring Your Own License)":
+        licensing_monthly = target_tco['infrastructure']['sql_licensing_monthly']
+        optional_monthly += licensing_monthly
+        optional_components.append(f"SQL Licensing: ${licensing_monthly:,.0f}")
+    
+    if enable_datadog:
+        datadog_monthly = target_tco['infrastructure']['datadog_monthly']
+        optional_monthly += datadog_monthly
+        optional_components.append(f"Datadog: ${datadog_monthly:,.0f}")
+    
+    st.markdown(f"""
+    <div class="executive-summary">
+        <h4>Optional Services Summary</h4>
+        <p><strong>Monthly Total:</strong> ${optional_monthly:,.0f}</p>
+        <p><strong>Annual Total:</strong> ${optional_monthly * 12:,.0f}</p>
+        <p><strong>{timeframe}-Month Total:</strong> ${optional_monthly * timeframe:,.0f}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    for component in optional_components:
+        st.write(f"• {component}")
+    
+    if not optional_components:
+        st.info("Using BYOL + Basic monitoring (lowest cost option)")
+
 # Workforce Planning with practical parameters
 st.markdown('<div class="section-header">Workforce Planning & Resource Requirements</div>', unsafe_allow_html=True)
 
 st.markdown(f"""
 <div class="executive-summary">
-<h4>Strategic Workforce Analysis (Updated with Practical Parameters)</h4>
+<h4>Strategic Workforce Analysis (Updated with v7.0 Features)</h4>
 <p><strong>Infrastructure Scale:</strong> {target_clusters} {deployment_type.lower()}s planned over {timeframe} months</p>
+<p><strong>NEW Licensing Model:</strong> {licensing_model} | <strong>NEW Monitoring:</strong> {'Datadog Platform ($' + f'{target_tco["infrastructure"]["datadog_monthly"]:,.0f}/month)' if enable_datadog else 'Basic CloudWatch'}</p>
 <p><strong>Practical Automation Impact:</strong> {metrics['automation_maturity']:.0f}% automation maturity with realistic 65% maximum</p>
 <p><strong>Workforce Ratios:</strong> Conservative ratios - DBAs: 1/{st.session_state.config_params['dba_ratio']}, Automation: 1/{st.session_state.config_params['automation_ratio']}, ITIL: 1/{st.session_state.config_params['itil_ratio']}</p>
 <p><strong>Service Coverage:</strong> {'Enhanced 24x7 operations (1.6x multiplier)' if support_24x7 else 'Standard business hours'} support model</p>
-<p><strong>Key Update:</strong> More conservative workforce requirements with practical automation constraints</p>
+<p><strong>Key Update v7.0:</strong> Enhanced cost analysis with BYOL and Datadog options for flexible enterprise planning</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -951,7 +1119,7 @@ with col1:
     
     with st.expander("Methodology: Practical Resource Requirements Calculation"):
         st.markdown(f"""
-        **Updated Workforce-Centric Calculation Framework (Practical Parameters):**
+        **Updated Workforce-Centric Calculation Framework (v7.0):**
         
         1. **Conservative Base Resource Requirements by Role:**
            - SQL Server DBA Expert: 1 FTE per {st.session_state.config_params['dba_ratio']} clusters (reduced from 25 for realism)
@@ -975,14 +1143,12 @@ with col1:
            - Always maintain at least 1 DBA and 1 Automation Engineer
            - ITIL Manager required for 10+ clusters
         
-        **Key Improvements in This Version:**
-        - **Reduced workforce ratios** for more realistic staffing requirements
-        - **Conservative automation limits** while maintaining 65% maximum as requested
-        - **Increased 24x7 multiplier** reflecting true continuous operations cost
-        - **Enhanced minimum staffing validation** preventing unrealistic team sizes
-        - **More realistic workforce reduction percentages** in automation components
+        **NEW Features in v7.0:**
+        - **BYOL Cost Impact**: No direct workforce impact (licensing model choice)
+        - **Datadog Monitoring**: No direct workforce reduction but improves operational efficiency
+        - **Enhanced Cost Transparency**: Better planning for total enterprise costs
         
-        **Why These Parameters Are More Practical:**
+        **Why These Parameters Remain Practical:**
         - Reflects actual enterprise database operation complexity
         - Accounts for legacy system maintenance overhead
         - Considers change management and coordination requirements
@@ -1203,9 +1369,9 @@ for i, (practice, data) in enumerate(st.session_state.itil_practices.items()):
             st.session_state.itil_practices[practice]['maturity'] = maturity
         
         priority_indicator = {
-            'Critical': 'HIGH PRIORITY',
-            'High': 'MEDIUM PRIORITY', 
-            'Medium': 'STANDARD PRIORITY'
+            'Critical': '🔴 HIGH PRIORITY',
+            'High': '🟡 MEDIUM PRIORITY', 
+            'Medium': '🟢 STANDARD PRIORITY'
         }
         st.caption(f"{priority_indicator[data['priority']]}")
         
@@ -1245,8 +1411,8 @@ for tab, (category, display_name) in zip(tabs, categories.items()):
                 
                 st.caption(comp_data['description'])
                 
-                impact_levels = {'Critical': 'CRITICAL', 'High': 'HIGH', 'Medium': 'MEDIUM'}
-                complexity_levels = {'High': 'HIGH', 'Medium': 'MEDIUM', 'Low': 'LOW'}
+                impact_levels = {'Critical': '🔴 CRITICAL', 'High': '🟡 HIGH', 'Medium': '🟢 MEDIUM'}
+                complexity_levels = {'High': '🔴 HIGH', 'Medium': '🟡 MEDIUM', 'Low': '🟢 LOW'}
                 
                 st.caption(f"**Business Impact:** {impact_levels[comp_data['business_impact']]} | "
                           f"**Technical Complexity:** {complexity_levels[comp_data['technical_complexity']]} | "
@@ -1313,23 +1479,23 @@ for metric_name, scores in benchmark_scores.items():
     
     if lower_is_better:
         if scores['our_score'] <= scores['industry_leader']:
-            status = "INDUSTRY LEADING"
+            status = "🏆 INDUSTRY LEADING"
             benchmark_class = "alert-success"
         elif scores['our_score'] <= scores['industry_avg']:
-            status = "ABOVE AVERAGE"
+            status = "📈 ABOVE AVERAGE"
             benchmark_class = "alert-info"
         else:
-            status = "IMPROVEMENT REQUIRED"
+            status = "⚠️ IMPROVEMENT REQUIRED"
             benchmark_class = "alert-warning"
     else:
         if scores['our_score'] >= scores['industry_leader']:
-            status = "INDUSTRY LEADING"
+            status = "🏆 INDUSTRY LEADING"
             benchmark_class = "alert-success"
         elif scores['our_score'] >= scores['industry_avg']:
-            status = "ABOVE AVERAGE"
+            status = "📈 ABOVE AVERAGE"
             benchmark_class = "alert-info"
         else:
-            status = "IMPROVEMENT REQUIRED"
+            status = "⚠️ IMPROVEMENT REQUIRED"
             benchmark_class = "alert-warning"
     
     st.markdown(f"""
@@ -1369,7 +1535,7 @@ st.metric("Governance Maturity Level", f"{governance_maturity:.0f}%")
 
 # Cost Analysis Sections
 st.markdown("---")
-st.markdown('<div class="section-header">Comprehensive Cost Analysis</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header">Comprehensive Cost Analysis (v7.0)</div>', unsafe_allow_html=True)
 
 # Detailed Cost Calculation Breakdown
 st.markdown("### Detailed Cost Calculation Methodology")
@@ -1379,25 +1545,34 @@ with st.expander("Infrastructure Cost Calculations", expanded=False):
     
     # Get current pricing for display
     windows_rate = pricing_data['ec2_windows'].get(instance_type, 0.456)
-    edition_key_map = {"Web": "ec2_sql_web", "Standard": "ec2_sql_standard", "Enterprise": "ec2_sql_enterprise"}
-    edition_key = edition_key_map.get(sql_edition, "ec2_sql_standard")
-    sql_rate = pricing_data[edition_key].get(instance_type, windows_rate * 2)
-    licensing_rate = sql_rate - windows_rate
+    
+    if licensing_model == "BYOL (Bring Your Own License)":
+        compute_rate = windows_rate
+        licensing_rate = 0
+        licensing_desc = "🆕 BYOL (Customer Licenses)"
+    else:
+        edition_key_map = {"Web": "ec2_sql_web", "Standard": "ec2_sql_standard", "Enterprise": "ec2_sql_enterprise"}
+        edition_key = edition_key_map.get(sql_edition, "ec2_sql_standard")
+        sql_rate = pricing_data[edition_key].get(instance_type, windows_rate * 2)
+        licensing_rate = sql_rate - windows_rate
+        compute_rate = sql_rate
+        licensing_desc = f"SQL {sql_edition} License-Included"
     
     total_instances = target_clusters * ec2_per_cluster
     ebs_rate_per_gb = pricing_data['ebs'][ebs_volume_type]
     storage_gb = current_storage_tb * 1024
     
     st.markdown(f"""
-    **EC2 Compute & SQL Licensing (Updated 2025 Pricing):**
+    **EC2 Compute & SQL Licensing (Updated 2025 Pricing with v7.0 Features):**
     - Instance Type: {instance_type}
     - SQL Server Edition: {sql_edition}
-    - Windows Base Rate: ${windows_rate:.3f}/hour (updated from previous lower rates)
-    - SQL Server Rate: ${sql_rate:.3f}/hour
+    - Licensing Model: {licensing_desc}
+    - Windows Base Rate: ${windows_rate:.3f}/hour
+    - Total Compute Rate: ${compute_rate:.3f}/hour
     - SQL Licensing Component: ${licensing_rate:.3f}/hour
     - Total Instances: {target_clusters} clusters × {ec2_per_cluster} instances = {total_instances} instances
-    - Monthly Compute Cost: {total_instances} × ${sql_rate:.3f} × 24 × 30 = ${total_instances * sql_rate * 24 * 30:,.0f}
-    - **{timeframe}-Month Total**: ${total_instances * sql_rate * 24 * 30 * timeframe:,.0f}
+    - Monthly Compute Cost: {total_instances} × ${compute_rate:.3f} × 24 × 30 = ${total_instances * compute_rate * 24 * 30:,.0f}
+    - **{timeframe}-Month Total**: ${total_instances * compute_rate * 24 * 30 * timeframe:,.0f}
     
     **EBS Storage:**
     - Volume Type: {ebs_volume_type.upper()}
@@ -1417,6 +1592,16 @@ with st.expander("Infrastructure Cost Calculations", expanded=False):
         - **{timeframe}-Month Total**: ${monthly_ssm * timeframe:,.0f}
         """)
     
+    if enable_datadog:
+        monthly_datadog = (1000 / 12) * total_instances
+        st.markdown(f"""
+        **🆕 Datadog Monitoring:**
+        - Rate: $1,000/instance/year = ${1000/12:.2f}/instance/month
+        - Monthly Cost: {total_instances} instances × ${1000/12:.2f} = ${monthly_datadog:,.0f}
+        - **{timeframe}-Month Total**: ${monthly_datadog * timeframe:,.0f}
+        - **Includes**: Infrastructure monitoring, APM, log analytics, synthetic monitoring, custom dashboards
+        """)
+    
     data_transfer_monthly = target_clusters * (20 if deployment_type == "AlwaysOn Cluster" else 8)
     st.markdown(f"""
     **Data Transfer (updated estimates):**
@@ -1426,96 +1611,26 @@ with st.expander("Infrastructure Cost Calculations", expanded=False):
     
     **Infrastructure Grand Total**: ${target_tco['infrastructure']['total_monthly'] * timeframe:,.0f}
     """)
-
-with st.expander("Workforce Requirements Calculations", expanded=False):
-    st.markdown("#### Practical Workforce FTE Breakdown (Realistic Automation Constraints)")
     
-    # Calculate step by step with practical constraints
-    base_dba = max(1, math.ceil(target_clusters / st.session_state.config_params['dba_ratio']))
-    base_automation = max(1, math.ceil(target_clusters / st.session_state.config_params['automation_ratio']))
-    base_itil = max(1, math.ceil(target_clusters / st.session_state.config_params['itil_ratio']))
-    
-    # Apply realistic automation constraints
-    effective_automation = min(metrics['automation_maturity'], st.session_state.config_params['max_automation_maturity'])
-    support_multiplier = st.session_state.config_params['support_24x7_multiplier'] if support_24x7 else 1.0
-    
-    # Role-specific automation calculations (updated practical limits)
-    dba_automation_cap = min(effective_automation, 50)
-    dba_reduction = (dba_automation_cap / 100) * 0.45
-    dba_multiplier = 1.0 - dba_reduction
-    
-    automation_reduction = (effective_automation / 100) * 0.60
-    automation_multiplier = 1.0 - automation_reduction
-    
-    itil_automation_cap = min(effective_automation, 40)
-    itil_reduction = (itil_automation_cap / 100) * 0.35
-    itil_multiplier = 1.0 - itil_reduction
-    
-    final_dba = math.ceil(base_dba * support_multiplier * dba_multiplier)
-    final_automation = math.ceil(base_automation * support_multiplier * automation_multiplier)
-    final_itil = math.ceil(base_itil * support_multiplier * itil_multiplier)
-    
-    st.markdown(f"""
-    **Practical Base Staffing Requirements (Conservative Ratios):**
-    - SQL Server DBA Expert: {target_clusters} clusters ÷ {st.session_state.config_params['dba_ratio']} = {base_dba} FTE (ratio reduced for realism)
-    - Infrastructure Automation: {target_clusters} clusters ÷ {st.session_state.config_params['automation_ratio']} = {base_automation} FTE (complexity accounted)
-    - ITIL Service Manager: {target_clusters} clusters ÷ {st.session_state.config_params['itil_ratio']} = {base_itil} FTE (coordination overhead)
-    - **Base Total**: {base_dba + base_automation + base_itil} FTE
-    
-    **Realistic Automation Constraints (65% Cap Maintained):**
-    - Current Automation Maturity: {metrics['automation_maturity']:.1f}%
-    - Effective Automation (capped at {st.session_state.config_params['max_automation_maturity']}%): {effective_automation:.1f}%
-    - Support Coverage: {'24x7' if support_24x7 else 'Business Hours'} (multiplier: {support_multiplier:.1f}x - increased for true continuous ops)
-    
-    **Role-Specific Automation Impact (More Conservative):**
-    - **DBA**: Capped at 50% automation (legacy systems, human judgment critical)
-      - Automation impact: {dba_automation_cap:.1f}% × 45% max reduction = {dba_reduction*100:.1f}% reduction
-      - Workforce multiplier: {dba_multiplier:.3f}
-    - **Infrastructure Automation**: Up to 60% reduction possible (reduced from 70%)
-      - Automation impact: {effective_automation:.1f}% × 60% max reduction = {automation_reduction*100:.1f}% reduction  
-      - Workforce multiplier: {automation_multiplier:.3f}
-    - **ITIL Service Manager**: Capped at 40% automation (human coordination essential)
-      - Automation impact: {itil_automation_cap:.1f}% × 35% max reduction = {itil_reduction*100:.1f}% reduction
-      - Workforce multiplier: {itil_multiplier:.3f}
-    
-    **Final FTE Requirements (With Practical Constraints):**
-    - SQL Server DBA Expert: {base_dba} × {support_multiplier:.1f} × {dba_multiplier:.3f} = **{final_dba} FTE**
-    - Infrastructure Automation: {base_automation} × {support_multiplier:.1f} × {automation_multiplier:.3f} = **{final_automation} FTE**
-    - ITIL Service Manager: {base_itil} × {support_multiplier:.1f} × {itil_multiplier:.3f} = **{final_itil} FTE**
-    
-    **Total Required Workforce**: {final_dba + final_automation + final_itil} FTE
-    **Workforce Reduction**: {(base_dba + base_automation + base_itil) - (final_dba + final_automation + final_itil)} FTE ({((base_dba + base_automation + base_itil) - (final_dba + final_automation + final_itil))/(base_dba + base_automation + base_itil)*100:.1f}% reduction)
-    
-    **Why These Numbers Are More Practical:**
-    - **Conservative workforce ratios** prevent operational failures
-    - **Realistic automation limits** account for enterprise legacy constraints
-    - **Enhanced 24x7 multiplier** reflects true continuous operations cost
-    - **Minimum staffing validation** ensures viable team structures
-    - **Role-specific constraints** recognize different automation potentials
-    """)
-
-with st.expander("Total Cost of Ownership Formula", expanded=False):
-    st.markdown(f"""
-    **Infrastructure TCO + Workforce FTE Requirements (Updated Model):**
-    
-    **Infrastructure Costs** = EC2 + EBS + SSM + Data Transfer
-    - Updated with current 2025 AWS pricing
-    - Static costs based on cluster/instance count
-    - Not affected by automation (infrastructure needed regardless)
-    - **{timeframe}-Month Total**: ${target_tco['infrastructure']['total_monthly'] * timeframe:,.0f}
-    
-    **Workforce Requirements** = (Base FTE × Support Multiplier × Automation Multiplier)
-    - Conservative base ratios: {st.session_state.config_params['dba_ratio']}/{st.session_state.config_params['automation_ratio']}/{st.session_state.config_params['itil_ratio']} clusters per DBA/Automation/ITIL
-    - Reduced by automation maturity with practical constraints (65% max)
-    - Enhanced support multiplier ({st.session_state.config_params['support_24x7_multiplier']}x) for 24x7 requirements
-    - **Total Required**: {target_tco['workforce_requirements']['total_fte']} FTE positions
-    
-    **Cost Distribution:**
-    - Infrastructure: ${target_tco['total_infrastructure_cost']:,.0f} ({timeframe} months)
-    - Workforce: {target_tco['workforce_requirements']['total_fte']} FTE positions required
-    
-    **Key Insight**: Infrastructure costs use current pricing while workforce requirements are optimized through realistic automation constraints
-    """)
+    if licensing_model == "BYOL (Bring Your Own License)":
+        if sql_edition == "Enterprise":
+            est_annual_per_core = 14256
+        elif sql_edition == "Standard":
+            est_annual_per_core = 3717
+        else:
+            est_annual_per_core = 1435
+        
+        est_cores = 4  # Assume 4 cores per instance
+        est_total_annual = est_annual_per_core * est_cores * total_instances
+        
+        st.markdown(f"""
+        **🆕 BYOL Licensing Notes:**
+        - Customer provides SQL Server {sql_edition} licenses
+        - AWS charges only for Windows compute infrastructure
+        - Customer responsible for license compliance and Software Assurance
+        - **Estimated external licensing cost**: ~${est_total_annual:,.0f}/year (not included in AWS bill)
+        - **Cost breakdown**: {total_instances} instances × 4 cores × ${est_annual_per_core:,.0f}/core
+        """)
 
 # Infrastructure Cost Breakdown Chart
 fig_tco = go.Figure(data=[
@@ -1523,12 +1638,12 @@ fig_tco = go.Figure(data=[
         name='Cost Components',
         x=list(target_tco['tco_breakdown'].keys()),
         y=list(target_tco['tco_breakdown'].values()),
-        marker_color=['#1e40af', '#dc2626', '#059669', '#f59e0b', '#7c3aed', '#be123c']
+        marker_color=['#1e40af', '#dc2626', '#059669', '#f59e0b', '#7c3aed', '#be123c', '#10b981'][:len(target_tco['tco_breakdown'])]
     )
 ])
 
 fig_tco.update_layout(
-    title=f"Total Cost of Ownership Analysis - {timeframe} Month Projection (Updated Pricing)",
+    title=f"Total Cost of Ownership Analysis - {timeframe} Month Projection (v7.0: {licensing_model}{'+ Datadog' if enable_datadog else ''})",
     xaxis_title="Cost Components",
     yaxis_title="Total Cost (USD)",
     height=400,
@@ -1538,6 +1653,133 @@ fig_tco.update_layout(
 )
 
 st.plotly_chart(fig_tco, use_container_width=True)
+
+# Enhanced SQL Server Licensing Calculator with BYOL support
+def calculate_sql_server_licensing_aws(deployment_type, instance_type, num_instances, edition="Standard", licensing_model="License-Included"):
+    """Calculate SQL Server licensing costs using AWS License-Included pricing or BYOL with updated rates"""
+    
+    windows_rate = pricing_data['ec2_windows'].get(instance_type, 0.456)
+    
+    if licensing_model == "BYOL (Bring Your Own License)":
+        # For BYOL, only pay for Windows compute, bring your own SQL licenses
+        licensing_hourly_rate = 0
+        total_hourly_rate = windows_rate
+        licensing_model_desc = "🆕 BYOL (Customer Licenses)"
+        licensing_notes = f"Customer provides SQL Server {edition} licenses. Only paying for Windows compute."
+        
+        # Estimate typical BYOL licensing costs for reference (not included in AWS bill)
+        if edition == "Enterprise":
+            estimated_byol_annual_per_core = 14256  # Approximate SQL Server Enterprise per core
+        elif edition == "Standard": 
+            estimated_byol_annual_per_core = 3717   # Approximate SQL Server Standard per core
+        else:
+            estimated_byol_annual_per_core = 1435   # Approximate SQL Server Web per core
+            
+        # Assume 4 cores per instance for estimation
+        estimated_cores_per_instance = 4
+        estimated_byol_annual_cost = estimated_byol_annual_per_core * estimated_cores_per_instance
+        
+    else:
+        # AWS License-Included model
+        edition_key_map = {
+            "Web": "ec2_sql_web",
+            "Standard": "ec2_sql_standard", 
+            "Enterprise": "ec2_sql_enterprise"
+        }
+        
+        edition_key = edition_key_map.get(edition, "ec2_sql_standard")
+        sql_rate = pricing_data[edition_key].get(instance_type, windows_rate * 2)
+        
+        licensing_hourly_rate = sql_rate - windows_rate
+        total_hourly_rate = sql_rate
+        licensing_model_desc = "AWS License-Included"
+        licensing_notes = f"Based on updated AWS {edition} License-Included pricing vs Windows-only pricing"
+        estimated_byol_annual_cost = 0
+    
+    licensing_monthly_cost = licensing_hourly_rate * 24 * 30
+    
+    if deployment_type == "AlwaysOn Cluster":
+        total_monthly_cost = licensing_monthly_cost * 3 * num_instances
+        total_instances_calc = 3 * num_instances
+    else:
+        total_monthly_cost = licensing_monthly_cost * num_instances
+        total_instances_calc = num_instances
+    
+    return {
+        "monthly_cost": total_monthly_cost,
+        "annual_cost": total_monthly_cost * 12,
+        "licensing_model": licensing_model_desc, 
+        "edition": edition,
+        "hourly_rate_per_instance": licensing_hourly_rate,
+        "total_hourly_rate": total_hourly_rate,
+        "estimated_byol_annual_per_instance": estimated_byol_annual_cost if licensing_model == "BYOL (Bring Your Own License)" else 0,
+        "notes": licensing_notes
+    }
+
+st.markdown("### SQL Server Licensing Analysis")
+
+aws_licensing_info = calculate_sql_server_licensing_aws(deployment_type, instance_type, target_clusters, sql_edition, licensing_model)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown(f"""
+    <div class="executive-summary">
+        <h4>SQL Server Licensing Summary</h4>
+        <p><strong>Edition:</strong> SQL Server {aws_licensing_info['edition']}</p>
+        <p><strong>Model:</strong> {aws_licensing_info['licensing_model']}</p>
+        <p><strong>Hourly Rate:</strong> ${aws_licensing_info['hourly_rate_per_instance']:.3f}/instance</p>
+        <p><strong>Deployment:</strong> {deployment_type}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    if licensing_model == "BYOL (Bring Your Own License)":
+        st.metric("AWS Monthly Licensing", "$0 (BYOL)")
+        st.metric("AWS Annual Licensing", "$0 (BYOL)")
+        if aws_licensing_info['estimated_byol_annual_per_instance'] > 0:
+            st.caption(f"Est. BYOL Cost: ${aws_licensing_info['estimated_byol_annual_per_instance']:,.0f}/instance/year")
+    else:
+        st.metric("Monthly Licensing", f"${aws_licensing_info['monthly_cost']:,.0f}")
+        st.metric("Annual Licensing", f"${aws_licensing_info['annual_cost']:,.0f}")
+
+with col3:
+    if licensing_model == "BYOL (Bring Your Own License)":
+        st.info("🆕 BYOL: Bring your own SQL Server licenses. Only pay for Windows compute on AWS. Customer manages license compliance.")
+    else:
+        if deployment_type == "AlwaysOn Cluster":
+            st.info("AWS License-Included pricing automatically covers all nodes in AlwaysOn clusters. No separate licensing calculation needed.")
+        else:
+            st.info("AWS License-Included pricing simplifies licensing - no core counting or CAL management required.")
+    
+    st.caption(f"**Pricing Model:** {aws_licensing_info['notes']}")
+
+# Add Datadog monitoring cost display if enabled
+if enable_datadog:
+    st.markdown("### 🆕 Datadog Monitoring Analysis")
+    
+    datadog_monthly = (1000 / 12) * target_tco['infrastructure']['total_instances']
+    datadog_annual = 1000 * target_tco['infrastructure']['total_instances']
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown(f"""
+        <div class="executive-summary">
+            <h4>Datadog Monitoring Platform</h4>
+            <p><strong>Platform:</strong> Datadog Observability</p>
+            <p><strong>Cost:</strong> $1,000/instance/year</p>
+            <p><strong>Instances:</strong> {target_tco['infrastructure']['total_instances']}</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.metric("Monthly Datadog Cost", f"${datadog_monthly:,.0f}")
+        st.metric("Annual Datadog Cost", f"${datadog_annual:,.0f}")
+    
+    with col3:
+        st.info("📊 Datadog provides comprehensive monitoring, APM, log management, and infrastructure observability for your SQL Server environment.")
+        st.caption("**Includes:** Infrastructure monitoring, APM, log analytics, synthetic monitoring, and custom dashboards")
 
 # Workforce FTE Impact Analysis
 st.markdown("### Workforce FTE Requirements Analysis")
@@ -1564,66 +1806,6 @@ with col3:
         st.info("Moderate workforce optimization")
     else:
         st.warning("Limited workforce optimization - consider additional automation")
-
-# Microsoft SQL Server Licensing Calculator (AWS License-Included Model)
-def calculate_sql_server_licensing_aws(deployment_type, instance_type, num_instances, edition="Standard"):
-    """Calculate SQL Server licensing costs using AWS License-Included pricing with updated rates"""
-    
-    edition_key_map = {
-        "Web": "ec2_sql_web",
-        "Standard": "ec2_sql_standard", 
-        "Enterprise": "ec2_sql_enterprise"
-    }
-    
-    edition_key = edition_key_map.get(edition, "ec2_sql_standard")
-    windows_rate = pricing_data['ec2_windows'].get(instance_type, 0.456)
-    sql_rate = pricing_data[edition_key].get(instance_type, windows_rate * 2)
-    
-    licensing_hourly_rate = sql_rate - windows_rate
-    licensing_monthly_cost = licensing_hourly_rate * 24 * 30
-    
-    if deployment_type == "AlwaysOn Cluster":
-        total_monthly_cost = licensing_monthly_cost * 3 * num_instances
-    else:
-        total_monthly_cost = licensing_monthly_cost * num_instances
-    
-    return {
-        "monthly_cost": total_monthly_cost,
-        "annual_cost": total_monthly_cost * 12,
-        "licensing_model": "AWS License-Included", 
-        "edition": edition,
-        "hourly_rate_per_instance": licensing_hourly_rate,
-        "notes": f"Based on updated AWS {edition} License-Included pricing vs Windows-only pricing"
-    }
-
-st.markdown("### SQL Server License-Included Analysis")
-
-aws_licensing_info = calculate_sql_server_licensing_aws(deployment_type, instance_type, target_clusters, sql_edition)
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown(f"""
-    <div class="executive-summary">
-        <h4>AWS Licensing Summary</h4>
-        <p><strong>Edition:</strong> SQL Server {aws_licensing_info['edition']}</p>
-        <p><strong>Model:</strong> {aws_licensing_info['licensing_model']}</p>
-        <p><strong>Hourly Rate:</strong> ${aws_licensing_info['hourly_rate_per_instance']:.3f}/instance</p>
-        <p><strong>Deployment:</strong> {deployment_type}</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col2:
-    st.metric("Monthly Licensing", f"${aws_licensing_info['monthly_cost']:,.0f}")
-    st.metric("Annual Licensing", f"${aws_licensing_info['annual_cost']:,.0f}")
-
-with col3:
-    if deployment_type == "AlwaysOn Cluster":
-        st.info("AWS License-Included pricing automatically covers all nodes in AlwaysOn clusters. No separate licensing calculation needed.")
-    else:
-        st.info("AWS License-Included pricing simplifies licensing - no core counting or CAL management required.")
-    
-    st.caption(f"**Pricing Model:** {aws_licensing_info['notes']}")
 
 # ROI Analysis (Updated with workforce focus)
 st.markdown("### Workforce Optimization Analysis")
@@ -1670,6 +1852,8 @@ with col1:
     st.write(f"**Governance Framework:** {governance_maturity:.0f}% ({'Established' if governance_maturity >= 70 else 'Needs Development'})")
     st.write(f"**Infrastructure Cost:** ${target_tco['total_infrastructure_cost']:,.0f} over {timeframe} months")
     st.write(f"**Workforce Requirements:** {target_tco['workforce_requirements']['total_fte']} FTE (practical ratios applied)")
+    st.write(f"**NEW - Licensing Model:** {licensing_model}")
+    st.write(f"**NEW - Monitoring:** {'Datadog Enabled' if enable_datadog else 'Basic CloudWatch'}")
 
 with col2:
     st.markdown("### Strategic Recommendations")
@@ -1690,6 +1874,12 @@ with col2:
     
     if target_tco['workforce_requirements']['total_fte'] > 15:  # Adjusted threshold
         recommendations.append("Focus on workforce automation - significant FTE requirements identified")
+    
+    if licensing_model == "BYOL (Bring Your Own License)":
+        recommendations.append("🆕 Ensure BYOL license compliance and Software Assurance coverage")
+    
+    if enable_datadog:
+        recommendations.append("📊 Leverage Datadog insights for proactive performance optimization")
     
     if not recommendations:
         recommendations.append("Continue execution of current strategy")
@@ -1719,6 +1909,15 @@ if total_hires_needed > 3:  # Adjusted threshold
 
 action_items.append("Evaluate Reserved Instance pricing for long-term cost optimization")
 action_items.append("Establish monthly infrastructure cost monitoring with updated 2025 pricing")
+
+if licensing_model == "BYOL (Bring Your Own License)":
+    action_items.append("🆕 Audit current SQL Server license inventory and Software Assurance status")
+    action_items.append("🆕 Validate license mobility rights for cloud deployment")
+
+if enable_datadog:
+    action_items.append("📊 Configure Datadog monitoring dashboards and alerting thresholds")
+    action_items.append("📊 Establish Datadog-based SLA monitoring and reporting")
+
 action_items.append("Configure practical workforce ratios based on conservative organizational standards")
 action_items.append("Validate FTE requirements with current operational capacity and realistic constraints")
 
@@ -1732,21 +1931,23 @@ st.markdown("### Enterprise Readiness Assessment")
 if (metrics['automation_maturity'] >= 60 and 
     metrics['itil_maturity'] >= 60 and 
     governance_maturity >= 60):
-    st.markdown('<div class="alert-success"><strong>ENTERPRISE GRADE CERTIFIED</strong> - This solution meets practical industry standards for enterprise SQL Server scaling</div>', unsafe_allow_html=True)
+    st.markdown('<div class="alert-success"><strong>🏆 ENTERPRISE GRADE CERTIFIED</strong> - This solution meets practical industry standards for enterprise SQL Server scaling</div>', unsafe_allow_html=True)
 elif (metrics['automation_maturity'] >= 40):
-    st.markdown('<div class="alert-warning"><strong>ENTERPRISE READY</strong> - Solution has strong foundation with practical constraints applied</div>', unsafe_allow_html=True)
+    st.markdown('<div class="alert-warning"><strong>📈 ENTERPRISE READY</strong> - Solution has strong foundation with practical constraints applied</div>', unsafe_allow_html=True)
 else:
-    st.markdown('<div class="alert-info"><strong>DEVELOPMENT REQUIRED</strong> - Significant gaps exist, requires practical development approach</div>', unsafe_allow_html=True)
+    st.markdown('<div class="alert-info"><strong>⚠️ DEVELOPMENT REQUIRED</strong> - Significant gaps exist, requires practical development approach</div>', unsafe_allow_html=True)
 
-# Final validation note with practical parameters
+# Final validation note with practical parameters and new features
 st.markdown("---")
 st.markdown(f"""
-### Practical Estimation Tool Summary (Updated v6.0)
+### 🆕 Enterprise SQL Server Platform v7.0 - Complete Analysis Summary
 
-**Infrastructure Analysis (2025 Pricing):**
+**Infrastructure Cost Analysis (Enhanced with BYOL & Datadog):**
 - **Total Infrastructure Cost**: ${target_tco['total_infrastructure_cost']:,.0f} ({timeframe} months)
 - **Monthly Infrastructure Cost**: ${target_tco['infrastructure']['total_monthly']:,.0f}
 - **Instance Count**: {target_tco['infrastructure']['total_instances']} EC2 instances
+- **NEW - Licensing Model**: {licensing_model}
+{f"- **NEW - Datadog Monitoring**: ${target_tco['infrastructure']['datadog_monthly']:,.0f}/month (${target_tco['infrastructure']['datadog_monthly'] * 12:,.0f}/year)" if enable_datadog else "- **NEW - Datadog Monitoring**: Not enabled"}
 
 **Workforce Requirements (Conservative FTE Model):**
 - **Total FTE Required**: {target_tco['workforce_requirements']['total_fte']} positions
@@ -1760,13 +1961,30 @@ st.markdown(f"""
 - **Maximum Workforce Reduction**: {st.session_state.config_params['max_workforce_reduction']}% (reduced to 55% for realism)
 - **FTE Reduction through Automation**: {baseline_fte - target_tco['workforce_requirements']['total_fte']} positions ({(baseline_fte - target_tco['workforce_requirements']['total_fte'])/baseline_fte*100:.1f}% reduction)
 
-**Key Updates in This Version:**
+**NEW Features in v7.0:**
+- ✅ **BYOL Support**: Choose between AWS License-Included or Bring Your Own License
+- ✅ **Datadog Integration**: Comprehensive monitoring at $1,000/instance/year
+- ✅ **Enhanced Cost Breakdown**: Separate tracking of licensing models and monitoring costs
+- ✅ **Flexible Licensing Analysis**: Handles both AWS managed and customer-managed licensing
+
+**Key Updates in Version 7.0:**
 - **Updated AWS pricing** reflecting current 2025 rates
+- **BYOL licensing option** for customers with existing SQL Server licenses
+- **Datadog monitoring integration** with comprehensive observability costs
+- **Enhanced cost transparency** with detailed breakdown by licensing model
 - **Conservative workforce ratios** preventing operational failures
 - **Realistic automation constraints** while maintaining 65% maximum
 - **Enhanced 24x7 support multiplier** (1.6x) for true continuous operations
 - **Practical implementation timelines** with extended hiring lead times
 - **Minimum staffing validation** ensuring viable team structures
+
+**Licensing Model Details:**
+- **License-Included**: Pay AWS for SQL Server licenses (${licensing_model == 'License-Included' and aws_licensing_info['monthly_cost'] or 0:,.0f}/month)
+- **BYOL**: Customer provides licenses, pay only Windows compute (Est. external cost: ~${licensing_model == 'BYOL (Bring Your Own License)' and aws_licensing_info['estimated_byol_annual_per_instance'] * target_tco['infrastructure']['total_instances'] or 0:,.0f}/year)
+
+**Monitoring & Observability:**
+{f"- **Datadog Platform**: ${(1000/12) * target_tco['infrastructure']['total_instances'] * timeframe:,.0f} over {timeframe} months" if enable_datadog else "- **Monitoring**: Basic AWS CloudWatch (included in EC2 pricing)"}
+{f"- **Annual Datadog Cost**: ${1000 * target_tco['infrastructure']['total_instances']:,.0f}" if enable_datadog else ""}
 
 **Practical Workforce Ratios Applied:**
 - All ratios based on conservative enterprise database operations experience
@@ -1774,9 +1992,10 @@ st.markdown(f"""
 - Include enhanced 24x7 support multiplier when applicable
 - Factor in role-specific automation limitations with practical workforce reduction percentages
 
-This updated estimation tool provides infrastructure cost projections with current 2025 pricing and workforce FTE requirements based on practical, conservative parameters. All workforce ratios remain configurable but default to realistic enterprise standards.
+This updated estimation tool provides infrastructure cost projections with current 2025 pricing, flexible licensing options (License-Included vs BYOL), optional Datadog monitoring, and workforce FTE requirements based on practical, conservative parameters. All workforce ratios remain configurable but default to realistic enterprise standards.
 """)
 
 # Footer with version update
 st.markdown("---")
-st.markdown("*Enterprise SQL Server Scaling Platform v6.0 - Complete Feature Set | Practical Numbers Edition | 65% Automation Cap | Conservative Workforce Ratios | Current 2025 AWS Pricing*")
+st.markdown("**🆕 Enterprise SQL Server Scaling Platform v7.0 - BYOL & Datadog Edition**")
+st.markdown("*Complete Feature Set | BYOL Support | Datadog Monitoring | Practical Automation Limits | Conservative Workforce Ratios | Current 2025 AWS Pricing | Monthly Forecasting | ITIL Framework | Enterprise Governance | Industry Benchmarks | Risk Assessment*")
